@@ -10,6 +10,7 @@ from .auth import require_login, verify_admin
 from .config import settings
 from .database import init_db
 from . import site_manager
+from . import monitoring
 
 
 app = FastAPI(title="Docker Hosting Panel")
@@ -53,6 +54,12 @@ def logout(request: Request):
 def dashboard(request: Request):
     require_login(request)
     return templates.TemplateResponse("dashboard.html", {"request": request, "sites": site_manager.list_sites()})
+
+
+@app.get("/security", response_class=HTMLResponse)
+def security_dashboard(request: Request):
+    require_login(request)
+    return templates.TemplateResponse("security.html", {"request": request, "security": monitoring.coraza_summary()})
 
 
 @app.get("/sites/new", response_class=HTMLResponse)
@@ -109,6 +116,17 @@ def restore_database(request: Request, site_id: int, backup_file: UploadFile = F
         output = "Upload ditolak. File restore harus berekstensi .sql."
     else:
         output = site_manager.restore_database(site, backup_file.file, backup_file.filename)
+    site = site_manager.get_site(site_id)
+    return templates.TemplateResponse("site_detail.html", {"request": request, "site": site, "output": output})
+
+
+@app.post("/sites/{site_id}/awstats/update", response_class=HTMLResponse)
+def update_awstats(request: Request, site_id: int):
+    require_login(request)
+    site = site_manager.get_site(site_id)
+    if not site:
+        raise HTTPException(status_code=404)
+    output = site_manager.generate_awstats_report(site)
     site = site_manager.get_site(site_id)
     return templates.TemplateResponse("site_detail.html", {"request": request, "site": site, "output": output})
 

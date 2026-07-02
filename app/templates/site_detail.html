@@ -86,6 +86,21 @@
 </section>
 
 <section class="panel" style="margin-top: 16px;">
+  <h2>AWStats</h2>
+  {% if site.awstats.ready %}
+  <p><b>Status:</b> Report ready</p>
+  <p><b>Last update:</b> {{ site.awstats.updated_at }}</p>
+  <p><a class="button secondary" href="https://{{ site.domain }}/awstats/" target="_blank" rel="noopener">Open AWStats</a></p>
+  {% else %}
+  <p><b>Status:</b> Report belum dibuat</p>
+  <p class="muted">AWStats membaca access.log nginx site lalu membuat HTML static yang bisa dibuka langsung dari domain site.</p>
+  {% endif %}
+  <form method="post" action="/sites/{{ site.id }}/awstats/update">
+    <button class="secondary" type="submit">Generate AWStats</button>
+  </form>
+</section>
+
+<section class="panel" style="margin-top: 16px;">
   <h2>Containers</h2>
   <table>
     <thead><tr><th>Name</th><th>Status</th><th>Image</th></tr></thead>

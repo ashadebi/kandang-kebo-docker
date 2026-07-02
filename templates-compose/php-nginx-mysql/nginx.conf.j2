@@ -12,6 +12,16 @@ server {
         try_files $uri $uri/ /index.php?$query_string;
     }
 
+    location = /awstats {
+        return 301 /awstats/;
+    }
+
+    location /awstats/ {
+        alias /var/www/awstats/;
+        index index.html;
+        autoindex off;
+    }
+
     location ~ \.php$ {
         include fastcgi_params;
         fastcgi_pass php:9000;

@@ -6,7 +6,7 @@ ENV PYTHONUNBUFFERED=1
 WORKDIR /app
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends docker.io docker-compose ca-certificates \
+    && apt-get install -y --no-install-recommends awstats docker.io docker-compose ca-certificates perl \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .

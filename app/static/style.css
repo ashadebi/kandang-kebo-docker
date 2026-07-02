@@ -23,12 +23,25 @@ a {
   background: #ffffff;
   border-bottom: 1px solid #dde4ef;
   display: flex;
+  gap: 18px;
   justify-content: space-between;
   padding: 14px 28px;
 }
 
 .brand {
   font-size: 18px;
+  font-weight: 700;
+}
+
+.topnav {
+  display: flex;
+  gap: 14px;
+  margin-left: auto;
+}
+
+.topnav a {
+  color: #31445f;
+  font-size: 14px;
   font-weight: 700;
 }
 
@@ -55,6 +68,33 @@ a {
   border: 1px solid #dde4ef;
   border-radius: 8px;
   padding: 22px;
+}
+
+.stats-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.metric {
+  background: #ffffff;
+  border: 1px solid #dde4ef;
+  border-radius: 8px;
+  display: grid;
+  gap: 8px;
+  padding: 18px;
+}
+
+.metric span {
+  color: #66758d;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.metric strong {
+  color: #172033;
+  font-size: 34px;
+  line-height: 1;
 }
 
 .grid {
@@ -154,6 +194,38 @@ th {
   padding: 12px;
 }
 
+.bar-list {
+  display: grid;
+  gap: 12px;
+}
+
+.bar-row {
+  align-items: center;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 64px minmax(0, 1fr) 42px;
+}
+
+.bar-track {
+  background: #e5ebf3;
+  border-radius: 999px;
+  height: 12px;
+  overflow: hidden;
+}
+
+.bar-fill {
+  background: #176b5d;
+  height: 100%;
+}
+
+.log-message {
+  color: #31445f;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  max-width: 520px;
+  overflow-wrap: anywhere;
+}
+
 pre {
   background: #0f172a;
   border-radius: 8px;
@@ -216,6 +288,10 @@ pre {
 
 @media (max-width: 760px) {
   .grid.two {
+    grid-template-columns: 1fr;
+  }
+
+  .stats-grid {
     grid-template-columns: 1fr;
   }
 

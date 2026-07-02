@@ -12,6 +12,10 @@
       <header class="topbar">
         <a class="brand" href="/">Docker Hosting Panel</a>
         {% if request.session.get("admin") %}
+        <nav class="topnav">
+          <a href="/">Sites</a>
+          <a href="/security">Security</a>
+        </nav>
         <form method="post" action="/logout">
           <button class="secondary" type="submit">Logout</button>
         </form>

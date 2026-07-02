@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="actions" style="justify-content: space-between; align-items: center; margin-bottom: 18px;">
+  <div>
+    <h1>Security Monitor</h1>
+    <p class="muted">Coraza WAF activity from Traefik logs, last {{ security.hours }} hours.</p>
+  </div>
+  <a class="button secondary" href="/">Back</a>
+</div>
+
+<div class="stats-grid">
+  <section class="metric">
+    <span>Total WAF Events</span>
+    <strong>{{ security.total_events }}</strong>
+  </section>
+  <section class="metric">
+    <span>WAF Enabled Sites</span>
+    <strong>{{ security.enabled_sites|length }}</strong>
+  </section>
+  <section class="metric">
+    <span>Log Window</span>
+    <strong>{{ security.hours }}h</strong>
+  </section>
+</div>
+
+<div class="grid two" style="margin-top: 16px;">
+  <section class="panel">
+    <h2>Events by Hour</h2>
+    <div class="bar-list">
+      {% for item in security.hourly %}
+      <div class="bar-row">
+        <span>{{ item.label }}</span>
+        <div class="bar-track"><div class="bar-fill" style="width: {{ item.percent }}%;"></div></div>
+        <b>{{ item.count }}</b>
+      </div>
+      {% else %}
+      <p class="muted">Belum ada event Coraza dalam window ini.</p>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Domains</h2>
+    <table>
+      <thead><tr><th>Domain</th><th>Events</th></tr></thead>
+      <tbody>
+        {% for domain, count in security.domains %}
+        <tr><td>{{ domain }}</td><td>{{ count }}</td></tr>
+        {% else %}
+        <tr><td colspan="2" class="muted">Belum ada domain di log Coraza.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+</div>
+
+<section class="panel" style="margin-top: 16px;">
+  <h2>WAF Enabled Sites</h2>
+  <table>
+    <thead><tr><th>Site</th><th>Domain</th></tr></thead>
+    <tbody>
+      {% for site in security.enabled_sites %}
+      <tr><td>{{ site.username }}</td><td>{{ site.domain }}</td></tr>
+      {% else %}
+      <tr><td colspan="2" class="muted">Belum ada site dengan Coraza WAF aktif.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section class="panel" style="margin-top: 16px;">
+  <h2>Recent Events</h2>
+  <table>
+    <thead><tr><th>Time</th><th>Host</th><th>Rule</th><th>Message</th></tr></thead>
+    <tbody>
+      {% for event in security.events %}
+      <tr>
+        <td>{{ event.time.strftime("%Y-%m-%d %H:%M:%S") }}</td>
+        <td>{{ event.host }}</td>
+        <td>{{ event.rule }}</td>
+        <td class="log-message">{{ event.message }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="4" class="muted">Belum ada event Coraza.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

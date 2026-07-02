@@ -65,17 +65,18 @@ def restart_container(name: str) -> None:
 
 
 def recreate_compose_service(project_dir: Path, service: str) -> None:
+    project_name = compose_project_name(project_dir / "docker-compose.yml")
     if which("docker"):
-        cmd = ["docker", "compose", "up", "-d", "--force-recreate", service]
+        cmd = ["docker", "compose", "-p", project_name, "up", "-d", "--force-recreate", "--no-deps", service]
     elif which("docker-compose"):
-        cmd = ["docker-compose", "up", "-d", "--force-recreate", service]
+        cmd = ["docker-compose", "-p", project_name, "up", "-d", "--force-recreate", "--no-deps", service]
     else:
         return
 
     result = subprocess.run(cmd, cwd=project_dir, check=False, text=True, capture_output=True)
     if result.returncode != 0 and cmd[:2] == ["docker", "compose"] and which("docker-compose"):
         subprocess.run(
-            ["docker-compose", "up", "-d", "--force-recreate", service],
+            ["docker-compose", "-p", project_name, "up", "-d", "--force-recreate", "--no-deps", service],
             cwd=project_dir,
             check=False,
             text=True,
