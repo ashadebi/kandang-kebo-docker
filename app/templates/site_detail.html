@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="actions" style="justify-content: space-between; align-items: center; margin-bottom: 18px;">
+  <div>
+    <h1>{{ site.username }}</h1>
+    <p class="muted">{{ site.domain }} · {{ site.home }}</p>
+  </div>
+  <a class="button secondary" href="/">Back</a>
+</div>
+
+<div class="grid two">
+  <section class="panel">
+    <h2>Control</h2>
+    <div class="actions">
+      <form method="post" action="/sites/{{ site.id }}/up"><button type="submit">Start</button></form>
+      <form method="post" action="/sites/{{ site.id }}/restart"><button class="secondary" type="submit">Restart</button></form>
+      <form method="post" action="/sites/{{ site.id }}/down"><button class="danger" type="submit">Stop</button></form>
+      <form method="post" action="/sites/{{ site.id }}/logs"><button class="secondary" type="submit">Logs</button></form>
+      <form method="post" action="/sites/{{ site.id }}/backup-db"><button class="secondary" type="submit">Backup DB</button></form>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>SFTP Access</h2>
+    <p><b>Host:</b> server-ip atau ftp.{{ site.domain }}</p>
+    <p><b>Port:</b> {{ site.sftp_port }}</p>
+    <p><b>Username:</b> {{ site.username }}</p>
+    <p><b>Password:</b> {{ site.sftp_password }}</p>
+    <p><b>Web root:</b> /home/{{ site.username }}/public_html</p>
+  </section>
+</div>
+
+<div class="grid two" style="margin-top: 16px;">
+  <section class="panel">
+    <h2>MySQL Access</h2>
+    <p><b>Host:</b> db</p>
+    <p><b>Database:</b> {{ site.db_name }}</p>
+    <p><b>Username:</b> {{ site.db_user }}</p>
+    <p><b>Password:</b> {{ site.db_password }}</p>
+    <p class="muted">Credential ini dipakai dari container aplikasi site. Untuk restore manual, gunakan form upload di sebelah.</p>
+  </section>
+
+  <section class="panel">
+    <h2>Restore Database</h2>
+    <form method="post" action="/sites/{{ site.id }}/restore-db" enctype="multipart/form-data" class="stack">
+      <label>
+        File backup.sql
+        <input name="backup_file" type="file" accept=".sql" required>
+      </label>
+      <button class="secondary" type="submit">Upload & Restore</button>
+    </form>
+  </section>
+</div>
+
+<section class="panel" style="margin-top: 16px;">
+  <h2>Runtime</h2>
+    <p><b>CMS:</b> {{ site.cms_app }}</p>
+    <p><b>Coraza WAF:</b> {{ "Enabled" if site.waf_enabled else "Disabled" }}</p>
+    <p><b>php.ini preset:</b> {{ site.php_ini_preset }}</p>
+    <p><b>Resource limit:</b> {{ site.resource_preset }}</p>
+</section>
+
+<section class="panel" style="margin-top: 16px;">
+  <h2>Containers</h2>
+  <table>
+    <thead><tr><th>Name</th><th>Status</th><th>Image</th></tr></thead>
+    <tbody>
+      {% for container in site.containers %}
+      <tr><td>{{ container.name }}</td><td>{{ container.status }}</td><td>{{ container.image }}</td></tr>
+      {% else %}
+      <tr><td colspan="3" class="muted">Container belum dibuat. Klik Start.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+{% if output %}
+<section class="panel" style="margin-top: 16px;">
+  <h2>Output</h2>
+  <pre>{{ output }}</pre>
+</section>
+{% endif %}
+{% endblock %}

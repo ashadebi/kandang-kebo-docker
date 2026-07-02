@@ -1,0 +1,8 @@
+.env
+__pycache__/
+*.pyc
+data/panel.sqlite
+data/letsencrypt/
+data/sftp/ssh_host_*_key
+data/sftp/ssh_host_*_key.pub
+*.log

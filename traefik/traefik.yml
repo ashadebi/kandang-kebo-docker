@@ -1,0 +1,24 @@
+providers:
+  docker:
+    exposedByDefault: false
+  file:
+    filename: /etc/traefik/dynamic/coraza-waf.yml
+
+entryPoints:
+  web:
+    address: ":80"
+  websecure:
+    address: ":443"
+
+certificatesResolvers:
+  letsencrypt:
+    acme:
+      storage: /letsencrypt/acme.json
+      httpChallenge:
+        entryPoint: web
+
+experimental:
+  plugins:
+    coraza:
+      moduleName: github.com/jcchavezs/coraza-http-wasm-traefik
+      version: v0.3.0

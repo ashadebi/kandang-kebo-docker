@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="panel">
+  <h1>Create Site</h1>
+  <p class="muted">Panel akan membuat folder /home/$user, compose file, credential database, dan akun SFTP.</p>
+  {% if error %}<div class="notice">{{ error }}</div>{% endif %}
+  <form class="grid two" method="post" action="/sites">
+    <label>Username
+      <input name="username" placeholder="client1" required>
+    </label>
+    <label>Domain
+      <input name="domain" placeholder="client1.example.com" required>
+    </label>
+    <label>PHP Version
+      <select name="php_version">
+        <optgroup label="PHP 5">
+          <option value="5.6">5.6 legacy</option>
+        </optgroup>
+        <optgroup label="PHP 7">
+          <option value="7.0">7.0</option>
+          <option value="7.1">7.1</option>
+          <option value="7.2">7.2</option>
+          <option value="7.3">7.3</option>
+          <option value="7.4">7.4</option>
+        </optgroup>
+        <optgroup label="PHP 8">
+          <option value="8.0">8.0</option>
+          <option value="8.1">8.1</option>
+          <option value="8.2">8.2</option>
+          <option value="8.3" selected>8.3</option>
+          <option value="8.4">8.4</option>
+        </optgroup>
+      </select>
+    </label>
+    <label>Database
+      <select name="db_engine">
+        <option value="mariadb">MariaDB</option>
+      </select>
+    </label>
+    <label>CMS / Starter App
+      <select name="cms_app">
+        <option value="none">Blank PHP site</option>
+        <option value="wordpress">WordPress</option>
+        <option value="joomla">Joomla</option>
+        <option value="drupal">Drupal</option>
+      </select>
+      <span class="muted">CMS populer tersedia untuk PHP 8.1 sampai 8.4.</span>
+    </label>
+    <label>php.ini Preset
+      <select name="php_ini_preset">
+        <option value="standard">Standard upload - 64M</option>
+        <option value="large_upload">Large upload - 256M</option>
+        <option value="very_large_upload">Very large upload - 1G</option>
+      </select>
+    </label>
+    <label>Resource Limit
+      <select name="resource_preset">
+        <option value="small">Small - low traffic</option>
+        <option value="medium" selected>Medium - default</option>
+        <option value="large">Large - busy site</option>
+      </select>
+    </label>
+    <label class="checkline">
+      <input name="waf_enabled" type="checkbox" value="true">
+      Enable Coraza WAF
+    </label>
+    <div class="actions">
+      <button type="submit">Create</button>
+      <a class="button secondary" href="/">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

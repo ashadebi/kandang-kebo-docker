@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="900" viewBox="0 0 1280 900" role="img" aria-label="Docker Hosting site detail screenshot">
+  <rect width="1280" height="900" fill="#f5f7fb"/>
+  <rect x="0" y="0" width="1280" height="64" fill="#ffffff"/>
+  <rect x="0" y="63" width="1280" height="1" fill="#dde4ef"/>
+  <text x="36" y="40" fill="#172033" font-family="Inter, Arial" font-size="22" font-weight="700">Docker Hosting Panel</text>
+  <rect x="1134" y="16" width="94" height="34" rx="6" fill="#31445f"/>
+  <text x="1156" y="39" fill="#ffffff" font-family="Inter, Arial" font-size="14" font-weight="700">Logout</text>
+  <text x="80" y="130" fill="#172033" font-family="Inter, Arial" font-size="44" font-weight="760">client1</text>
+  <text x="80" y="164" fill="#66758d" font-family="Inter, Arial" font-size="18">client1.example.com · /home/client1</text>
+  <rect x="1120" y="111" width="80" height="42" rx="6" fill="#31445f"/>
+  <text x="1142" y="138" fill="#ffffff" font-family="Inter, Arial" font-size="15" font-weight="700">Back</text>
+  <rect x="80" y="206" width="544" height="150" rx="8" fill="#ffffff" stroke="#dde4ef"/>
+  <text x="112" y="248" fill="#172033" font-family="Inter, Arial" font-size="24" font-weight="730">Control</text>
+  <rect x="112" y="276" width="70" height="38" rx="6" fill="#176b5d"/>
+  <text x="130" y="300" fill="#ffffff" font-family="Inter, Arial" font-size="14" font-weight="700">Start</text>
+  <rect x="194" y="276" width="86" height="38" rx="6" fill="#31445f"/>
+  <text x="210" y="300" fill="#ffffff" font-family="Inter, Arial" font-size="14" font-weight="700">Restart</text>
+  <rect x="292" y="276" width="66" height="38" rx="6" fill="#b42318"/>
+  <text x="311" y="300" fill="#ffffff" font-family="Inter, Arial" font-size="14" font-weight="700">Stop</text>
+  <rect x="370" y="276" width="66" height="38" rx="6" fill="#31445f"/>
+  <text x="389" y="300" fill="#ffffff" font-family="Inter, Arial" font-size="14" font-weight="700">Logs</text>
+  <rect x="448" y="276" width="105" height="38" rx="6" fill="#31445f"/>
+  <text x="464" y="300" fill="#ffffff" font-family="Inter, Arial" font-size="14" font-weight="700">Backup DB</text>
+  <rect x="656" y="206" width="544" height="190" rx="8" fill="#ffffff" stroke="#dde4ef"/>
+  <text x="688" y="248" fill="#172033" font-family="Inter, Arial" font-size="24" font-weight="730">SFTP Access</text>
+  <text x="688" y="288" fill="#172033" font-family="Inter, Arial" font-size="16" font-weight="700">Host:</text>
+  <text x="780" y="288" fill="#172033" font-family="Inter, Arial" font-size="16">server-ip atau ftp.client1.example.com</text>
+  <text x="688" y="318" fill="#172033" font-family="Inter, Arial" font-size="16" font-weight="700">Port:</text>
+  <text x="780" y="318" fill="#172033" font-family="Inter, Arial" font-size="16">22000</text>
+  <text x="688" y="348" fill="#172033" font-family="Inter, Arial" font-size="16" font-weight="700">Username:</text>
+  <text x="780" y="348" fill="#172033" font-family="Inter, Arial" font-size="16">client1</text>
+  <rect x="80" y="428" width="544" height="210" rx="8" fill="#ffffff" stroke="#dde4ef"/>
+  <text x="112" y="470" fill="#172033" font-family="Inter, Arial" font-size="24" font-weight="730">MySQL Access</text>
+  <text x="112" y="512" fill="#172033" font-family="Inter, Arial" font-size="16" font-weight="700">Host:</text>
+  <text x="226" y="512" fill="#172033" font-family="Inter, Arial" font-size="16">db</text>
+  <text x="112" y="542" fill="#172033" font-family="Inter, Arial" font-size="16" font-weight="700">Database:</text>
+  <text x="226" y="542" fill="#172033" font-family="Inter, Arial" font-size="16">client1_db</text>
+  <text x="112" y="572" fill="#172033" font-family="Inter, Arial" font-size="16" font-weight="700">Username:</text>
+  <text x="226" y="572" fill="#172033" font-family="Inter, Arial" font-size="16">client1_user</text>
+  <text x="112" y="602" fill="#172033" font-family="Inter, Arial" font-size="16" font-weight="700">Password:</text>
+  <text x="226" y="602" fill="#172033" font-family="Inter, Arial" font-size="16">generated-password</text>
+  <rect x="656" y="428" width="544" height="210" rx="8" fill="#ffffff" stroke="#dde4ef"/>
+  <text x="688" y="470" fill="#172033" font-family="Inter, Arial" font-size="24" font-weight="730">Restore Database</text>
+  <rect x="688" y="504" width="480" height="44" rx="6" fill="#ffffff" stroke="#c9d3e1"/>
+  <text x="708" y="532" fill="#66758d" font-family="Inter, Arial" font-size="15">backup.sql</text>
+  <rect x="688" y="570" width="140" height="42" rx="6" fill="#31445f"/>
+  <text x="710" y="597" fill="#ffffff" font-family="Inter, Arial" font-size="15" font-weight="700">Upload &amp; Restore</text>
+  <rect x="80" y="670" width="1120" height="120" rx="8" fill="#ffffff" stroke="#dde4ef"/>
+  <text x="112" y="712" fill="#172033" font-family="Inter, Arial" font-size="24" font-weight="730">Runtime</text>
+  <text x="112" y="752" fill="#172033" font-family="Inter, Arial" font-size="16">CMS: wordpress · Coraza WAF: Enabled · php.ini preset: standard · Resource limit: medium</text>
+  <text x="574" y="850" fill="#176b5d" font-family="Inter, Arial" font-size="16" font-weight="700">teer.id/ashadebi</text>
+</svg>

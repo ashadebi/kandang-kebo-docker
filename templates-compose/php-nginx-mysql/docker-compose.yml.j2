@@ -1,0 +1,118 @@
+version: "3.9"
+
+services:
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: site-{{ username }}-nginx
+    restart: unless-stopped
+    cpus: "{{ resources.nginx.cpus }}"
+    mem_limit: {{ resources.nginx.memory }}
+    memswap_limit: {{ resources.nginx.memory }}
+    pids_limit: 128
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - NET_RAW
+    tmpfs:
+      - /var/cache/nginx
+      - /var/run
+    volumes:
+      - {{ host_home }}/public_html:/var/www/html
+      - {{ host_home }}/logs:/var/log/nginx
+      - {{ host_home }}/config/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - php
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.site-{{ username }}.rule=Host(`{{ domain }}`)
+      - traefik.http.routers.site-{{ username }}.entrypoints=websecure
+      - traefik.http.routers.site-{{ username }}.tls.certresolver=letsencrypt
+      - traefik.http.services.site-{{ username }}.loadbalancer.server.port=80
+{% if waf_enabled %}
+      - traefik.http.routers.site-{{ username }}.middlewares=coraza-waf@file
+{% endif %}
+    networks:
+      - public
+      - internal
+
+  php:
+    image: {{ php_image }}
+    container_name: site-{{ username }}-php
+    restart: unless-stopped
+    cpus: "{{ resources.php.cpus }}"
+    mem_limit: {{ resources.php.memory }}
+    memswap_limit: {{ resources.php.memory }}
+    pids_limit: 256
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - NET_RAW
+{% if cms_app == "wordpress" %}
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_NAME: {{ db_name }}
+      WORDPRESS_DB_USER: {{ db_user }}
+      WORDPRESS_DB_PASSWORD: {{ db_password }}
+{% elif cms_app == "joomla" %}
+    environment:
+      JOOMLA_DB_HOST: db:3306
+      JOOMLA_DB_NAME: {{ db_name }}
+      JOOMLA_DB_USER: {{ db_user }}
+      JOOMLA_DB_PASSWORD: {{ db_password }}
+{% endif %}
+    volumes:
+      - {{ host_home }}/public_html:/var/www/html
+      - {{ host_home }}/tmp:/tmp
+      - {{ host_home }}/config/php.ini:/usr/local/etc/php/conf.d/zz-hosting-panel.ini:ro
+    networks:
+      - internal
+
+  db:
+    image: mariadb:11.4
+    container_name: site-{{ username }}-db
+    restart: unless-stopped
+    cpus: "{{ resources.db.cpus }}"
+    mem_limit: {{ resources.db.memory }}
+    memswap_limit: {{ resources.db.memory }}
+    pids_limit: 256
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      MARIADB_DATABASE: {{ db_name }}
+      MARIADB_USER: {{ db_user }}
+      MARIADB_PASSWORD: {{ db_password }}
+      MARIADB_ROOT_PASSWORD: {{ db_password }}
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - internal
+
+  sftp:
+    image: atmoz/sftp:alpine
+    container_name: site-{{ username }}-sftp
+    restart: unless-stopped
+    pids_limit: 128
+    security_opt:
+      - no-new-privileges:true
+    ports:
+      - "{{ sftp_port }}:22"
+    command: "{{ username }}:{{ sftp_password }}:82:82:public_html"
+    volumes:
+      - {{ host_home }}:/home/{{ username }}
+      - {{ project_root }}/data/sftp/ssh_host_ed25519_key:/etc/ssh/ssh_host_ed25519_key:ro
+      - {{ project_root }}/data/sftp/ssh_host_rsa_key:/etc/ssh/ssh_host_rsa_key:ro
+    networks:
+      - internal
+
+volumes:
+  db_data:
+    name: site-{{ username }}-db-data
+
+networks:
+  public:
+    external: true
+    name: {{ public_network }}
+  internal:
+    name: site-{{ username }}-internal

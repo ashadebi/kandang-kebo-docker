@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="actions" style="justify-content: space-between; align-items: center; margin-bottom: 18px;">
+  <div>
+    <h1>Sites</h1>
+    <p class="muted">Kelola website Docker, domain Traefik, dan akses SFTP.</p>
+  </div>
+  <a class="button" href="/sites/new">Create Site</a>
+</div>
+
+<div class="panel">
+  <table>
+    <thead>
+      <tr>
+        <th>User</th>
+        <th>Domain</th>
+        <th>PHP</th>
+        <th>CMS</th>
+        <th>Limits</th>
+        <th>WAF</th>
+        <th>Status</th>
+        <th>Containers</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for site in sites %}
+      <tr>
+        <td>{{ site.username }}</td>
+        <td><a href="https://{{ site.domain }}" target="_blank">{{ site.domain }}</a></td>
+        <td>{{ site.php_version }}</td>
+        <td>{{ site.cms_app }}</td>
+        <td>{{ site.resource_preset }}</td>
+        <td>{{ "On" if site.waf_enabled else "Off" }}</td>
+        <td>{{ site.status }}</td>
+        <td>{{ site.containers | length }}</td>
+        <td><a href="/sites/{{ site.id }}">Detail</a></td>
+      </tr>
+      {% else %}
+      <tr><td colspan="9" class="muted">Belum ada site.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

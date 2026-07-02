@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="panel" style="max-width: 420px; margin: 60px auto;">
+  <h1>Login Admin</h1>
+  {% if error %}<div class="notice">{{ error }}</div>{% endif %}
+  <form class="grid" method="post" action="/login">
+    <label>Username
+      <input name="username" autocomplete="username" required>
+    </label>
+    <label>Password
+      <input name="password" type="password" autocomplete="current-password" required>
+    </label>
+    <button type="submit">Masuk</button>
+  </form>
+</div>
+{% endblock %}

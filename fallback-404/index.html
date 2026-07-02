@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>404 - Site Not Found</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      body {
+        margin: 0;
+      }
+
+      main {
+        align-items: center;
+        background:
+          linear-gradient(90deg, rgba(4, 10, 20, 0.9) 0%, rgba(4, 10, 20, 0.72) 38%, rgba(4, 10, 20, 0.18) 72%),
+          url("/404-background.png") center / cover no-repeat;
+        display: flex;
+        min-height: 100vh;
+        padding: 32px;
+      }
+
+      section {
+        color: #fff;
+        max-width: 600px;
+        text-shadow: 0 3px 18px rgba(0, 0, 0, 0.55);
+      }
+
+      p:first-child {
+        color: #8ee7cf;
+        font-size: 15px;
+        font-weight: 800;
+        margin: 0 0 8px;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        color: #fff;
+        font-size: clamp(96px, 18vw, 220px);
+        line-height: 0.85;
+        margin: 0;
+        text-shadow: 0 6px 0 #176b5d, 0 16px 34px rgba(0, 0, 0, 0.65);
+      }
+
+      p:last-child {
+        color: #eef7ff;
+        font-size: 22px;
+        font-weight: 700;
+        line-height: 1.35;
+        margin: 22px 0 0;
+        max-width: 480px;
+      }
+
+      @media (max-width: 760px) {
+        main {
+          align-items: flex-end;
+          background:
+            linear-gradient(180deg, rgba(4, 10, 20, 0.16) 0%, rgba(4, 10, 20, 0.86) 58%, rgba(4, 10, 20, 0.94) 100%),
+            url("/404-background.png") center / cover no-repeat;
+          padding: 24px;
+        }
+
+        p:last-child {
+          font-size: 18px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <section>
+        <p>Subdomain belum dibuat</p>
+        <h1>404</h1>
+        <p>Site ini belum ada di hosting panel. Robot kecilnya sudah cari ke semua rak server.</p>
+      </section>
+    </main>
+  </body>
+</html>

@@ -1,0 +1,11 @@
+http:
+  middlewares:
+    coraza-waf:
+      plugin:
+        coraza:
+          directives:
+            - SecRuleEngine On
+            - SecRequestBodyAccess On
+            - SecDebugLog /dev/stdout
+            - SecDebugLogLevel 3
+            - SecRule REQUEST_URI|ARGS "(?i)(union.*select|<script|\\.\\./|/etc/passwd)" "id:1001,phase:2,log,deny,status:403,msg:'Basic Coraza WAF rule'"

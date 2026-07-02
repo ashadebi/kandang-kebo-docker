@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ title or "Docker Hosting Panel" }}</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+  </head>
+  <body>
+    <div class="shell">
+      <header class="topbar">
+        <a class="brand" href="/">Docker Hosting Panel</a>
+        {% if request.session.get("admin") %}
+        <form method="post" action="/logout">
+          <button class="secondary" type="submit">Logout</button>
+        </form>
+        {% endif %}
+      </header>
+      <main class="container">
+        {% block content %}{% endblock %}
+      </main>
+      <footer class="footer">
+        <a href="https://teer.id/ashadebi" target="_blank" rel="noopener">teer.id/ashadebi</a>
+      </footer>
+    </div>
+  </body>
+</html>

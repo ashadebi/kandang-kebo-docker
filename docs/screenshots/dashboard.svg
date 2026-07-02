@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="760" viewBox="0 0 1280 760" role="img" aria-label="Docker Hosting dashboard screenshot">
+  <rect width="1280" height="760" fill="#f5f7fb"/>
+  <rect x="0" y="0" width="1280" height="64" fill="#ffffff"/>
+  <rect x="0" y="63" width="1280" height="1" fill="#dde4ef"/>
+  <text x="36" y="40" fill="#172033" font-family="Inter, Arial" font-size="22" font-weight="700">Docker Hosting Panel</text>
+  <rect x="1134" y="16" width="94" height="34" rx="6" fill="#31445f"/>
+  <text x="1156" y="39" fill="#ffffff" font-family="Inter, Arial" font-size="14" font-weight="700">Logout</text>
+  <text x="80" y="130" fill="#172033" font-family="Inter, Arial" font-size="44" font-weight="760">Sites</text>
+  <text x="80" y="164" fill="#66758d" font-family="Inter, Arial" font-size="18">Kelola website Docker, domain Traefik, dan akses SFTP.</text>
+  <rect x="1080" y="111" width="120" height="42" rx="6" fill="#176b5d"/>
+  <text x="1102" y="138" fill="#ffffff" font-family="Inter, Arial" font-size="15" font-weight="700">Create Site</text>
+  <rect x="80" y="206" width="1120" height="350" rx="8" fill="#ffffff" stroke="#dde4ef"/>
+  <line x1="80" y1="270" x2="1200" y2="270" stroke="#e5ebf3"/>
+  <text x="112" y="246" fill="#172033" font-family="Inter, Arial" font-size="15" font-weight="700">User</text>
+  <text x="252" y="246" fill="#172033" font-family="Inter, Arial" font-size="15" font-weight="700">Domain</text>
+  <text x="492" y="246" fill="#172033" font-family="Inter, Arial" font-size="15" font-weight="700">PHP</text>
+  <text x="610" y="246" fill="#172033" font-family="Inter, Arial" font-size="15" font-weight="700">CMS</text>
+  <text x="742" y="246" fill="#172033" font-family="Inter, Arial" font-size="15" font-weight="700">Limits</text>
+  <text x="872" y="246" fill="#172033" font-family="Inter, Arial" font-size="15" font-weight="700">WAF</text>
+  <text x="982" y="246" fill="#172033" font-family="Inter, Arial" font-size="15" font-weight="700">Status</text>
+  <text x="1102" y="246" fill="#172033" font-family="Inter, Arial" font-size="15" font-weight="700">Detail</text>
+  <text x="112" y="314" fill="#172033" font-family="Inter, Arial" font-size="16">client1</text>
+  <text x="252" y="314" fill="#1663c7" font-family="Inter, Arial" font-size="16">client1.example.com</text>
+  <text x="492" y="314" fill="#172033" font-family="Inter, Arial" font-size="16">8.3</text>
+  <text x="610" y="314" fill="#172033" font-family="Inter, Arial" font-size="16">wordpress</text>
+  <text x="742" y="314" fill="#172033" font-family="Inter, Arial" font-size="16">medium</text>
+  <text x="872" y="314" fill="#176b5d" font-family="Inter, Arial" font-size="16">On</text>
+  <text x="982" y="314" fill="#172033" font-family="Inter, Arial" font-size="16">running</text>
+  <text x="1102" y="314" fill="#1663c7" font-family="Inter, Arial" font-size="16">Detail</text>
+  <line x1="80" y1="344" x2="1200" y2="344" stroke="#e5ebf3"/>
+  <text x="112" y="388" fill="#172033" font-family="Inter, Arial" font-size="16">shop</text>
+  <text x="252" y="388" fill="#1663c7" font-family="Inter, Arial" font-size="16">shop.example.com</text>
+  <text x="492" y="388" fill="#172033" font-family="Inter, Arial" font-size="16">8.2</text>
+  <text x="610" y="388" fill="#172033" font-family="Inter, Arial" font-size="16">none</text>
+  <text x="742" y="388" fill="#172033" font-family="Inter, Arial" font-size="16">small</text>
+  <text x="872" y="388" fill="#66758d" font-family="Inter, Arial" font-size="16">Off</text>
+  <text x="982" y="388" fill="#172033" font-family="Inter, Arial" font-size="16">created</text>
+  <text x="1102" y="388" fill="#1663c7" font-family="Inter, Arial" font-size="16">Detail</text>
+  <text x="574" y="704" fill="#176b5d" font-family="Inter, Arial" font-size="16" font-weight="700">teer.id/ashadebi</text>
+</svg>
