@@ -17,6 +17,8 @@ Built for `ashadebi/kandang-kebo-docker`.
   - MariaDB
   - isolated SFTP container
 - Traefik reverse proxy with HTTPS labels.
+- HTTP to HTTPS redirect for the panel and every hosted site.
+- Automatic Let's Encrypt certificates, with optional custom certificate upload per site.
 - Global fallback 404 page for unknown hostnames.
 - Optional Coraza WAF middleware per site.
 - PHP version selector from legacy PHP 5.6 up to PHP 8.4.
@@ -174,6 +176,23 @@ The detail page also shows:
 - database user
 - database password
 
+## HTTPS Certificates
+
+Every panel and hosted site HTTP request redirects to HTTPS automatically.
+
+Default behavior:
+
+- Traefik requests and renews Let's Encrypt certificates with the HTTP-01 challenge.
+- Make sure DNS points to the VPS and ports `80` and `443` are reachable from the public internet.
+
+Custom certificate behavior:
+
+- Open the site detail page.
+- Upload a PEM certificate/fullchain file and a PEM private key.
+- Files are stored under `data/custom-certs/<username>/`.
+- Traefik loads them through the dynamic file provider.
+- Removing the custom certificate returns the site to automatic Let's Encrypt.
+
 ## Permission Rules
 
 Writable web paths:
@@ -229,6 +248,7 @@ The `.gitignore` excludes:
 - `.env`
 - `data/panel.sqlite`
 - `data/letsencrypt/`
+- `data/custom-certs/`
 - generated SFTP host keys
 - Python caches
 - logs

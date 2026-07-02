@@ -53,6 +53,31 @@
 </div>
 
 <section class="panel" style="margin-top: 16px;">
+  <h2>HTTPS Certificate</h2>
+  {% if site.custom_certificate %}
+  <p><b>Status:</b> Custom certificate installed</p>
+  <p class="muted">Traefik memakai sertifikat yang diupload untuk domain ini. Hapus sertifikat custom untuk kembali ke Let's Encrypt otomatis.</p>
+  <form method="post" action="/sites/{{ site.id }}/remove-certificate">
+    <button class="danger" type="submit">Remove Custom Certificate</button>
+  </form>
+  {% else %}
+  <p><b>Status:</b> Let's Encrypt automatic</p>
+  <p class="muted">Jika user punya sertifikat berbayar sendiri, upload fullchain/certificate dan private key di sini.</p>
+  <form method="post" action="/sites/{{ site.id }}/upload-certificate" enctype="multipart/form-data" class="stack">
+    <label>
+      Certificate / fullchain PEM
+      <input name="certificate_file" type="file" accept=".pem,.crt,.cer" required>
+    </label>
+    <label>
+      Private key PEM
+      <input name="private_key_file" type="file" accept=".pem,.key" required>
+    </label>
+    <button class="secondary" type="submit">Upload Certificate</button>
+  </form>
+  {% endif %}
+</section>
+
+<section class="panel" style="margin-top: 16px;">
   <h2>Runtime</h2>
     <p><b>CMS:</b> {{ site.cms_app }}</p>
     <p><b>Coraza WAF:</b> {{ "Enabled" if site.waf_enabled else "Disabled" }}</p>

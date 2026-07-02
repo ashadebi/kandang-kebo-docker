@@ -12,7 +12,8 @@ services:
     command:
       - --providers.docker=true
       - --providers.docker.exposedbydefault=false
-      - --providers.file.filename=/etc/traefik/dynamic/coraza-waf.yml
+      - --providers.file.directory=/etc/traefik/dynamic
+      - --providers.file.watch=true
       - --entrypoints.web.address=:80
       - --entrypoints.websecure.address=:443
       - --certificatesresolvers.letsencrypt.acme.email=${LETSENCRYPT_EMAIL}
@@ -27,6 +28,7 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./data/letsencrypt:/letsencrypt
+      - ./data/custom-certs:/custom-certs:ro
       - ./traefik/dynamic:/etc/traefik/dynamic:ro
     networks:
       - hosting-public
@@ -47,6 +49,11 @@ services:
       - ${HOST_PROJECT_ROOT:-/opt/docker-hosting-panel}:${HOST_PROJECT_ROOT:-/opt/docker-hosting-panel}
     labels:
       - traefik.enable=true
+      - traefik.http.routers.hosting-panel-web.rule=Host(`${PANEL_DOMAIN}`)
+      - traefik.http.routers.hosting-panel-web.entrypoints=web
+      - traefik.http.routers.hosting-panel-web.middlewares=hosting-panel-https-redirect
+      - traefik.http.middlewares.hosting-panel-https-redirect.redirectscheme.scheme=https
+      - traefik.http.middlewares.hosting-panel-https-redirect.redirectscheme.permanent=true
       - traefik.http.routers.hosting-panel.rule=Host(`${PANEL_DOMAIN}`)
       - traefik.http.routers.hosting-panel.entrypoints=websecure
       - traefik.http.routers.hosting-panel.tls.certresolver=letsencrypt

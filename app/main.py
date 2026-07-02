@@ -113,6 +113,36 @@ def restore_database(request: Request, site_id: int, backup_file: UploadFile = F
     return templates.TemplateResponse("site_detail.html", {"request": request, "site": site, "output": output})
 
 
+@app.post("/sites/{site_id}/upload-certificate", response_class=HTMLResponse)
+def upload_certificate(
+    request: Request,
+    site_id: int,
+    certificate_file: UploadFile = File(...),
+    private_key_file: UploadFile = File(...),
+):
+    require_login(request)
+    site = site_manager.get_site(site_id)
+    if not site:
+        raise HTTPException(status_code=404)
+    try:
+        output = site_manager.upload_custom_certificate(site, certificate_file.file, private_key_file.file)
+    except Exception as exc:
+        output = f"Upload sertifikat gagal: {exc}"
+    site = site_manager.get_site(site_id)
+    return templates.TemplateResponse("site_detail.html", {"request": request, "site": site, "output": output})
+
+
+@app.post("/sites/{site_id}/remove-certificate", response_class=HTMLResponse)
+def remove_certificate(request: Request, site_id: int):
+    require_login(request)
+    site = site_manager.get_site(site_id)
+    if not site:
+        raise HTTPException(status_code=404)
+    output = site_manager.remove_custom_certificate(site)
+    site = site_manager.get_site(site_id)
+    return templates.TemplateResponse("site_detail.html", {"request": request, "site": site, "output": output})
+
+
 @app.post("/sites/{site_id}/{action}", response_class=HTMLResponse)
 def site_action(request: Request, site_id: int, action: str):
     require_login(request)

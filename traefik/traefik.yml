@@ -2,7 +2,8 @@ providers:
   docker:
     exposedByDefault: false
   file:
-    filename: /etc/traefik/dynamic/coraza-waf.yml
+    directory: /etc/traefik/dynamic
+    watch: true
 
 entryPoints:
   web:

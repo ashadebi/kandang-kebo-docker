@@ -20,6 +20,8 @@ Docker Hosting is a lightweight hosting control panel built with FastAPI, Docker
   - MariaDB
   - isolated SFTP container
 - Traefik reverse proxy with HTTPS labels.
+- HTTP to HTTPS redirect for the panel and all hosted sites.
+- Automatic Let's Encrypt certificates with optional custom certificate upload per site.
 - Global fallback 404 service for unknown hostnames.
 - Optional Coraza WAF middleware per site.
 - PHP version selector.
@@ -58,6 +60,15 @@ CMS sites do not receive the default `phpinfo()` index file. This lets official 
   - third site: `22002`
 
 This is easier to support than random ports and avoids multiple users sharing one SFTP daemon.
+
+## HTTPS Rules
+
+- HTTP traffic on port `80` redirects to HTTPS for the dashboard and every hosted site.
+- If no custom certificate is uploaded, Traefik uses Let's Encrypt automatically.
+- If a user uploads a paid/custom certificate, it is stored in `data/custom-certs/<username>/`.
+- Traefik reads custom certificates from `traefik/dynamic/custom-certs.yml`.
+- Removing the custom certificate returns the site to Let's Encrypt fallback.
+- Let's Encrypt requires public DNS pointing to the VPS and open inbound ports `80` and `443`.
 
 ## Fast VPS Deploy
 
