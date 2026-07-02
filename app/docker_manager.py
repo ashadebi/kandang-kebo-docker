@@ -9,15 +9,35 @@ def client():
     return docker.from_env()
 
 
+def compose_project_name(site_compose: Path) -> str:
+    username = site_compose.parent.parent.name
+    default_project = f"site-{username}"
+    container_prefix = f"site-{username}-"
+
+    try:
+        for container in client().containers.list(all=True, filters={"name": container_prefix}):
+            if not container.name.startswith(container_prefix):
+                continue
+            labels = container.attrs.get("Config", {}).get("Labels") or {}
+            project = labels.get("com.docker.compose.project")
+            if project:
+                return project
+    except Exception:
+        pass
+
+    return default_project
+
+
 def compose(site_compose: Path, action: str) -> str:
     allowed = {"up", "down", "restart", "logs"}
     if action not in allowed:
         raise ValueError(f"Unsupported compose action: {action}")
 
+    project_name = compose_project_name(site_compose)
     if which("docker"):
-        cmd = ["docker", "compose", "-f", str(site_compose)]
+        cmd = ["docker", "compose", "-p", project_name, "-f", str(site_compose)]
     elif which("docker-compose"):
-        cmd = ["docker-compose", "-f", str(site_compose)]
+        cmd = ["docker-compose", "-p", project_name, "-f", str(site_compose)]
     else:
         return "Docker CLI tidak ditemukan di container dashboard."
 
@@ -32,7 +52,7 @@ def compose(site_compose: Path, action: str) -> str:
 
     result = subprocess.run(cmd, check=False, text=True, capture_output=True)
     if result.returncode != 0 and cmd[:2] == ["docker", "compose"] and which("docker-compose"):
-        fallback = ["docker-compose", "-f", str(site_compose)] + cmd[4:]
+        fallback = ["docker-compose", "-p", project_name, "-f", str(site_compose)] + cmd[6:]
         result = subprocess.run(fallback, check=False, text=True, capture_output=True)
     return result.stdout + result.stderr
 
