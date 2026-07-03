@@ -65,7 +65,7 @@ def security_dashboard(request: Request):
 @app.get("/sites/new", response_class=HTMLResponse)
 def new_site(request: Request):
     require_login(request)
-    return templates.TemplateResponse("site_form.html", {"request": request, "error": None})
+    return templates.TemplateResponse("site_form.html", {"request": request, "error": None, "site": None})
 
 
 @app.post("/sites")
@@ -79,6 +79,7 @@ def create_site(
     php_ini_preset: str = Form("standard"),
     resource_preset: str = Form("medium"),
     cms_app: str = Form("none"),
+    custom_image: str = Form(""),
 ):
     require_login(request)
     try:
@@ -91,9 +92,86 @@ def create_site(
             php_ini_preset,
             resource_preset,
             cms_app,
+            custom_image,
         )
     except Exception as exc:
-        return templates.TemplateResponse("site_form.html", {"request": request, "error": str(exc)})
+        site = {
+            "username": username,
+            "domain": domain,
+            "php_version": php_version,
+            "db_engine": db_engine,
+            "waf_enabled": waf_enabled,
+            "php_ini_preset": php_ini_preset,
+            "resource_preset": resource_preset,
+            "cms_app": cms_app,
+            "custom_image": custom_image,
+        }
+        return templates.TemplateResponse("site_form.html", {"request": request, "error": str(exc), "site": site})
+    return RedirectResponse("/", status_code=303)
+
+
+@app.get("/sites/{site_id}/edit", response_class=HTMLResponse)
+def edit_site(request: Request, site_id: int):
+    require_login(request)
+    site = site_manager.get_site(site_id)
+    if not site:
+        raise HTTPException(status_code=404)
+    return templates.TemplateResponse("site_form.html", {"request": request, "error": None, "site": site})
+
+
+@app.post("/sites/{site_id}/edit", response_class=HTMLResponse)
+def update_site(
+    request: Request,
+    site_id: int,
+    domain: str = Form(...),
+    php_version: str = Form("8.3"),
+    db_engine: str = Form("mariadb"),
+    waf_enabled: bool = Form(False),
+    php_ini_preset: str = Form("standard"),
+    resource_preset: str = Form("medium"),
+    cms_app: str = Form("none"),
+    custom_image: str = Form(""),
+):
+    require_login(request)
+    site = site_manager.get_site(site_id)
+    if not site:
+        raise HTTPException(status_code=404)
+    try:
+        site_manager.update_site_options(
+            site,
+            domain,
+            php_version,
+            db_engine,
+            waf_enabled,
+            php_ini_preset,
+            resource_preset,
+            cms_app,
+            custom_image,
+        )
+    except Exception as exc:
+        site.update(
+            {
+                "domain": domain,
+                "php_version": php_version,
+                "db_engine": db_engine,
+                "waf_enabled": waf_enabled,
+                "php_ini_preset": php_ini_preset,
+                "resource_preset": resource_preset,
+                "cms_app": cms_app,
+                "custom_image": custom_image,
+            }
+        )
+        return templates.TemplateResponse("site_form.html", {"request": request, "error": str(exc), "site": site})
+    return RedirectResponse(f"/sites/{site_id}", status_code=303)
+
+
+@app.post("/sites/{site_id}/delete")
+def delete_site(request: Request, site_id: int):
+    require_login(request)
+    site = site_manager.get_site(site_id)
+    if not site:
+        raise HTTPException(status_code=404)
+    site_manager.delete_site(site)
     return RedirectResponse("/", status_code=303)
 
 

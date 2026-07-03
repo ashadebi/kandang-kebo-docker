@@ -72,8 +72,19 @@ services:
       JOOMLA_DB_USER: {{ db_user }}
       JOOMLA_DB_PASSWORD: {{ db_password }}
 {% endif %}
+{% if cms_app == "drupal" and not custom_image %}
+    command:
+      - sh
+      - -c
+      - |
+        if [ ! -e /var/www/drupal/composer.json ]; then
+          cp -a /opt/drupal/. /var/www/drupal/
+          chown -R www-data:www-data /var/www/drupal/web/sites /var/www/drupal/web/modules /var/www/drupal/web/themes || true
+        fi
+        php-fpm
+{% endif %}
     volumes:
-      - {{ host_home }}/public_html:/var/www/html
+      - {{ host_home }}/public_html:{{ php_mount_target }}
       - {{ host_home }}/tmp:/tmp
       - {{ host_home }}/config/php.ini:/usr/local/etc/php/conf.d/zz-hosting-panel.ini:ro
     networks:

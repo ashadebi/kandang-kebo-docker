@@ -26,6 +26,9 @@ Docker Hosting is a lightweight hosting control panel built with FastAPI, Docker
 - Optional Coraza WAF middleware per site.
 - PHP version selector.
 - CMS starter selector for WordPress, Joomla, and Drupal.
+- Custom PHP/CMS image override per site.
+- Edit site runtime options after creation, including CMS/image choice.
+- Delete site action from the panel, including compose stack, database volume, and site files.
 - `php.ini` upload presets.
 - CPU/RAM resource presets.
 - Detail page with SFTP and MySQL credentials.
@@ -48,6 +51,8 @@ Rules:
 - re-applied before Start/Restart actions
 
 CMS sites do not receive the default `phpinfo()` index file. This lets official CMS images copy their application files into an empty `public_html`.
+
+Drupal is handled specially because the official image stores the full project in `/opt/drupal` and exposes the web directory through `/var/www/html`. On first start, the site stack copies `/opt/drupal` into `/home/<username>/public_html` when `composer.json` is missing, then Nginx serves `/home/<username>/public_html/web`.
 
 ## SFTP Rules
 

@@ -34,7 +34,13 @@
         <td>{{ "On" if site.waf_enabled else "Off" }}</td>
         <td>{{ site.status }}</td>
         <td>{{ site.containers | length }}</td>
-        <td><a href="/sites/{{ site.id }}">Detail</a></td>
+        <td class="row-actions">
+          <a href="/sites/{{ site.id }}">Detail</a>
+          <a href="/sites/{{ site.id }}/edit">Edit</a>
+          <form method="post" action="/sites/{{ site.id }}/delete" onsubmit="return confirm('Delete site {{ site.username }} beserta container, volume database, dan file public_html?');">
+            <button class="link-danger" type="submit">Delete</button>
+          </form>
+        </td>
       </tr>
       {% else %}
       <tr><td colspan="9" class="muted">Belum ada site.</td></tr>

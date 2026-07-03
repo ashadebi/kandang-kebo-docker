@@ -5,7 +5,10 @@
     <h1>{{ site.username }}</h1>
     <p class="muted">{{ site.domain }} · {{ site.home }}</p>
   </div>
-  <a class="button secondary" href="/">Back</a>
+  <div class="actions">
+    <a class="button secondary" href="/sites/{{ site.id }}/edit">Edit</a>
+    <a class="button secondary" href="/">Back</a>
+  </div>
 </div>
 
 <div class="grid two">
@@ -17,6 +20,9 @@
       <form method="post" action="/sites/{{ site.id }}/down"><button class="danger" type="submit">Stop</button></form>
       <form method="post" action="/sites/{{ site.id }}/logs"><button class="secondary" type="submit">Logs</button></form>
       <form method="post" action="/sites/{{ site.id }}/backup-db"><button class="secondary" type="submit">Backup DB</button></form>
+      <form method="post" action="/sites/{{ site.id }}/delete" onsubmit="return confirm('Delete site {{ site.username }} beserta container, volume database, dan file public_html?');">
+        <button class="danger" type="submit">Delete Site</button>
+      </form>
     </div>
   </section>
 
@@ -80,6 +86,7 @@
 <section class="panel" style="margin-top: 16px;">
   <h2>Runtime</h2>
     <p><b>CMS:</b> {{ site.cms_app }}</p>
+    <p><b>Image:</b> {{ site.custom_image or "Default image" }}</p>
     <p><b>Coraza WAF:</b> {{ "Enabled" if site.waf_enabled else "Disabled" }}</p>
     <p><b>php.ini preset:</b> {{ site.php_ini_preset }}</p>
     <p><b>Resource limit:</b> {{ site.resource_preset }}</p>

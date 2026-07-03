@@ -38,6 +38,7 @@ def init_db() -> None:
                 php_ini_preset TEXT NOT NULL DEFAULT 'standard',
                 resource_preset TEXT NOT NULL DEFAULT 'medium',
                 cms_app TEXT NOT NULL DEFAULT 'none',
+                custom_image TEXT NOT NULL DEFAULT '',
                 status TEXT NOT NULL DEFAULT 'created',
                 created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
             );
@@ -52,6 +53,8 @@ def init_db() -> None:
             conn.execute("ALTER TABLE sites ADD COLUMN resource_preset TEXT NOT NULL DEFAULT 'medium'")
         if "cms_app" not in columns:
             conn.execute("ALTER TABLE sites ADD COLUMN cms_app TEXT NOT NULL DEFAULT 'none'")
+        if "custom_image" not in columns:
+            conn.execute("ALTER TABLE sites ADD COLUMN custom_image TEXT NOT NULL DEFAULT ''")
         if "sftp_port" not in columns:
             conn.execute("ALTER TABLE sites ADD COLUMN sftp_port INTEGER NOT NULL DEFAULT 0")
         used_ports = {

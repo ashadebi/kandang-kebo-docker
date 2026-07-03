@@ -57,6 +57,22 @@ def compose(site_compose: Path, action: str) -> str:
     return result.stdout + result.stderr
 
 
+def remove_stack(site_compose: Path) -> str:
+    project_name = compose_project_name(site_compose)
+    if which("docker"):
+        cmd = ["docker", "compose", "-p", project_name, "-f", str(site_compose), "down", "-v", "--remove-orphans"]
+    elif which("docker-compose"):
+        cmd = ["docker-compose", "-p", project_name, "-f", str(site_compose), "down", "-v", "--remove-orphans"]
+    else:
+        return "Docker CLI tidak ditemukan di container dashboard."
+
+    result = subprocess.run(cmd, check=False, text=True, capture_output=True)
+    if result.returncode != 0 and cmd[:2] == ["docker", "compose"] and which("docker-compose"):
+        fallback = ["docker-compose", "-p", project_name, "-f", str(site_compose), "down", "-v", "--remove-orphans"]
+        result = subprocess.run(fallback, check=False, text=True, capture_output=True)
+    return result.stdout + result.stderr
+
+
 def restart_container(name: str) -> None:
     try:
         client().containers.get(name).restart()

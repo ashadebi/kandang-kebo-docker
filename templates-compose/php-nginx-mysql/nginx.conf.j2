@@ -1,7 +1,7 @@
 server {
     listen 80;
     server_name {{ domain }};
-    root /var/www/html;
+    root {{ nginx_document_root }};
     index index.php index.html;
     client_max_body_size {{ client_max_body_size }};
 
@@ -25,8 +25,8 @@ server {
     location ~ \.php$ {
         include fastcgi_params;
         fastcgi_pass php:9000;
-        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
-        fastcgi_param DOCUMENT_ROOT $document_root;
+        fastcgi_param SCRIPT_FILENAME {{ php_document_root }}$fastcgi_script_name;
+        fastcgi_param DOCUMENT_ROOT {{ php_document_root }};
     }
 
     location ~ /\. {

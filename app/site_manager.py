@@ -9,7 +9,7 @@ import tarfile
 from contextlib import suppress
 from datetime import datetime
 from pathlib import Path
-from shutil import copyfile, copyfileobj, copytree
+from shutil import copyfile, copyfileobj, copytree, rmtree
 
 from jinja2 import Environment, FileSystemLoader
 
@@ -21,6 +21,7 @@ from .sftp_manager import render_users_conf
 
 USERNAME_RE = re.compile(r"^[a-z][a-z0-9_-]{2,31}$")
 DOMAIN_RE = re.compile(r"^[a-z0-9.-]+\.[a-z]{2,}$")
+IMAGE_REF_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/@-]{0,255}$")
 PHP_IMAGES = {
     "5.6": "php:5.6-fpm",
     "7.0": "php:7.0-fpm",
@@ -120,7 +121,20 @@ def validate_site(username: str, domain: str) -> None:
         raise ValueError("Domain tidak valid.")
 
 
-def validate_options(php_version: str, php_ini_preset: str, resource_preset: str, cms_app: str = "none") -> None:
+def validate_custom_image(custom_image: str = "") -> str:
+    image = custom_image.strip()
+    if image and not IMAGE_REF_RE.match(image):
+        raise ValueError("Custom image tidak valid. Gunakan format seperti registry/user/image:tag.")
+    return image
+
+
+def validate_options(
+    php_version: str,
+    php_ini_preset: str,
+    resource_preset: str,
+    cms_app: str = "none",
+    custom_image: str = "",
+) -> None:
     if php_version not in PHP_IMAGES:
         raise ValueError("Versi PHP tidak tersedia.")
     if php_ini_preset not in PHP_PRESETS:
@@ -131,6 +145,7 @@ def validate_options(php_version: str, php_ini_preset: str, resource_preset: str
         raise ValueError("Pilihan CMS tidak tersedia.")
     if cms_app != "none" and php_version not in CMS_IMAGES[cms_app]:
         raise ValueError("CMS populer saat ini tersedia untuk PHP 8.1 sampai 8.4.")
+    validate_custom_image(custom_image)
 
 
 def apply_runtime_options(site: dict) -> dict:
@@ -138,11 +153,21 @@ def apply_runtime_options(site: dict) -> dict:
     php_ini_preset = site.get("php_ini_preset") or "standard"
     resource_preset = site.get("resource_preset") or "medium"
     cms_app = site.get("cms_app") or "none"
-    validate_options(php_version, php_ini_preset, resource_preset, cms_app)
+    custom_image = validate_custom_image(site.get("custom_image") or "")
+    validate_options(php_version, php_ini_preset, resource_preset, cms_app, custom_image)
     site.update(PHP_PRESETS[php_ini_preset])
-    site["php_image"] = CMS_IMAGES.get(cms_app, {}).get(php_version, PHP_IMAGES[php_version])
+    site["php_image"] = custom_image or CMS_IMAGES.get(cms_app, {}).get(php_version, PHP_IMAGES[php_version])
+    if cms_app == "drupal" and not custom_image:
+        site["nginx_document_root"] = "/var/www/html/web"
+        site["php_mount_target"] = "/var/www/drupal"
+        site["php_document_root"] = "/var/www/drupal/web"
+    else:
+        site["nginx_document_root"] = "/var/www/html"
+        site["php_mount_target"] = "/var/www/html"
+        site["php_document_root"] = "/var/www/html"
     site["resources"] = RESOURCE_PRESETS[resource_preset]
     site["cms_label"] = CMS_OPTIONS[cms_app]["label"]
+    site["custom_image"] = custom_image
     return site
 
 
@@ -381,9 +406,11 @@ def create_site(
     php_ini_preset: str = "standard",
     resource_preset: str = "medium",
     cms_app: str = "none",
+    custom_image: str = "",
 ) -> dict:
     validate_site(username, domain)
-    validate_options(php_version, php_ini_preset, resource_preset, cms_app)
+    custom_image = validate_custom_image(custom_image)
+    validate_options(php_version, php_ini_preset, resource_preset, cms_app, custom_image)
     if query_one("SELECT id FROM sites WHERE username = ? OR domain = ?", (username, domain)):
         raise ValueError("Username atau domain sudah ada.")
 
@@ -408,6 +435,7 @@ def create_site(
         "php_ini_preset": php_ini_preset,
         "resource_preset": resource_preset,
         "cms_app": cms_app,
+        "custom_image": custom_image,
         "host_home": str(host_home_path(username)),
     }
     render_site_files(site)
@@ -415,9 +443,9 @@ def create_site(
         """
         INSERT INTO sites (
             username, domain, php_version, db_engine, db_name, db_user, db_password,
-            sftp_password, sftp_port, waf_enabled, php_ini_preset, resource_preset, cms_app
+            sftp_password, sftp_port, waf_enabled, php_ini_preset, resource_preset, cms_app, custom_image
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             username,
@@ -433,10 +461,82 @@ def create_site(
             php_ini_preset,
             resource_preset,
             cms_app,
+            custom_image,
         ),
     )
     render_users_conf()
     return site
+
+
+def update_site_options(
+    site: dict,
+    domain: str,
+    php_version: str,
+    db_engine: str,
+    waf_enabled: bool = False,
+    php_ini_preset: str = "standard",
+    resource_preset: str = "medium",
+    cms_app: str = "none",
+    custom_image: str = "",
+) -> dict:
+    domain = domain.strip().lower()
+    validate_site(site["username"], domain)
+    custom_image = validate_custom_image(custom_image)
+    validate_options(php_version, php_ini_preset, resource_preset, cms_app, custom_image)
+    duplicate = query_one("SELECT id FROM sites WHERE domain = ? AND id != ?", (domain, site["id"]))
+    if duplicate:
+        raise ValueError("Domain sudah dipakai site lain.")
+
+    updated = dict(site)
+    updated.update(
+        {
+            "domain": domain,
+            "php_version": php_version,
+            "db_engine": db_engine,
+            "waf_enabled": waf_enabled,
+            "php_ini_preset": php_ini_preset,
+            "resource_preset": resource_preset,
+            "cms_app": cms_app,
+            "custom_image": custom_image,
+            "host_home": str(host_home_path(site["username"])),
+        }
+    )
+    ensure_home(site["username"], cms_app)
+    render_site_files(updated)
+    execute(
+        """
+        UPDATE sites
+        SET domain = ?, php_version = ?, db_engine = ?, waf_enabled = ?,
+            php_ini_preset = ?, resource_preset = ?, cms_app = ?, custom_image = ?
+        WHERE id = ?
+        """,
+        (
+            domain,
+            php_version,
+            db_engine,
+            int(waf_enabled),
+            php_ini_preset,
+            resource_preset,
+            cms_app,
+            custom_image,
+            site["id"],
+        ),
+    )
+    return updated
+
+
+def delete_site(site: dict) -> str:
+    output = docker_manager.remove_stack(compose_path(site["username"]))
+    cert_dir = custom_cert_host_dir(site["username"])
+    if cert_dir.exists():
+        rmtree(cert_dir)
+    home = home_path(site["username"])
+    if home.exists():
+        rmtree(home)
+    execute("DELETE FROM sites WHERE id = ?", (site["id"],))
+    render_users_conf()
+    render_custom_certificates()
+    return output
 
 
 def allocate_sftp_port() -> int:
