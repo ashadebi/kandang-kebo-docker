@@ -22,6 +22,7 @@ copy_project() {
       --exclude ".git" \
       --exclude "__pycache__" \
       --exclude ".env" \
+      --exclude "docker-compose.override.yml" \
       --exclude "data/panel.sqlite" \
       --exclude "data/custom-certs" \
       --exclude "data/letsencrypt" \
@@ -33,6 +34,7 @@ copy_project() {
       --exclude ".git" \
       --exclude "__pycache__" \
       --exclude ".env" \
+      --exclude "docker-compose.override.yml" \
       --exclude "data/panel.sqlite" \
       --exclude "data/custom-certs" \
       --exclude "data/letsencrypt" \
