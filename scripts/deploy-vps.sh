@@ -21,6 +21,9 @@ copy_project() {
     rsync -az --delete \
       --exclude ".git" \
       --exclude "__pycache__" \
+      --exclude ".env" \
+      --exclude "data/panel.sqlite" \
+      --exclude "data/custom-certs" \
       --exclude "data/letsencrypt" \
       --exclude "data/sftp/ssh_host_*_key" \
       -e "ssh -p $SSH_PORT -o StrictHostKeyChecking=accept-new" \
@@ -29,6 +32,9 @@ copy_project() {
     tar -C "$PROJECT_DIR" \
       --exclude ".git" \
       --exclude "__pycache__" \
+      --exclude ".env" \
+      --exclude "data/panel.sqlite" \
+      --exclude "data/custom-certs" \
       --exclude "data/letsencrypt" \
       --exclude "data/sftp/ssh_host_*_key" \
       -czf - . | ssh_cmd "mkdir -p '$REMOTE_DIR' && tar -C '$REMOTE_DIR' -xzf -"
