@@ -64,6 +64,7 @@ remote_write_env() {
   local admin_username="${ADMIN_USERNAME:-admin}"
   local admin_password="${ADMIN_PASSWORD:-change-this-password}"
   local session_secret="${SESSION_SECRET:-$(openssl rand -hex 32 2>/dev/null || date +%s%N)}"
+  local session_idle_timeout_seconds="${SESSION_IDLE_TIMEOUT_SECONDS:-1800}"
   local host_home_root="${HOST_HOME_ROOT:-/home}"
   local public_network="${PUBLIC_NETWORK:-hosting-public}"
   local fallback_host_regexp="${FALLBACK_HOST_REGEXP:-.+}"
@@ -74,6 +75,7 @@ LETSENCRYPT_EMAIL=$letsencrypt_email
 ADMIN_USERNAME=$admin_username
 ADMIN_PASSWORD=$admin_password
 SESSION_SECRET=$session_secret
+SESSION_IDLE_TIMEOUT_SECONDS=$session_idle_timeout_seconds
 HOST_HOME_ROOT=$host_home_root
 HOST_PROJECT_ROOT=$REMOTE_DIR
 PUBLIC_NETWORK=$public_network

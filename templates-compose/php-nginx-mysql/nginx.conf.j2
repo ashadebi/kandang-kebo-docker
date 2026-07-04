@@ -13,11 +13,19 @@ server {
     }
 
     location = /awstats {
-        return 301 /awstats/;
+        return 301 /goaccess/;
     }
 
     location /awstats/ {
-        alias /var/www/awstats/;
+        return 301 /goaccess/;
+    }
+
+    location = /goaccess {
+        return 301 /goaccess/;
+    }
+
+    location /goaccess/ {
+        alias /var/www/goaccess/;
         index index.html;
         autoindex off;
     }

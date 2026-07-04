@@ -60,7 +60,7 @@ When a site is created, the panel creates:
 /home/<username>/
   public_html/
   logs/
-  awstats/
+  goaccess/
   backups/
     database/
     files/

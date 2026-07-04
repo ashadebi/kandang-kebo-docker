@@ -5,6 +5,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.sessions import SessionMiddleware
+from time import time
 
 from .auth import require_login, verify_admin
 from .config import settings
@@ -33,13 +34,15 @@ async def custom_http_exception_handler(request: Request, exc: StarletteHTTPExce
 
 @app.get("/login", response_class=HTMLResponse)
 def login_page(request: Request):
-    return templates.TemplateResponse("login.html", {"request": request, "error": None})
+    error = "Sesi admin berakhir karena tidak ada aktivitas." if request.query_params.get("expired") else None
+    return templates.TemplateResponse("login.html", {"request": request, "error": error})
 
 
 @app.post("/login")
 def login(request: Request, username: str = Form(...), password: str = Form(...)):
     if verify_admin(username, password):
         request.session["admin"] = username
+        request.session["last_activity"] = int(time())
         return RedirectResponse("/", status_code=303)
     return templates.TemplateResponse("login.html", {"request": request, "error": "Login gagal."})
 
@@ -198,15 +201,20 @@ def restore_database(request: Request, site_id: int, backup_file: UploadFile = F
     return templates.TemplateResponse("site_detail.html", {"request": request, "site": site, "output": output})
 
 
-@app.post("/sites/{site_id}/awstats/update", response_class=HTMLResponse)
-def update_awstats(request: Request, site_id: int):
+@app.post("/sites/{site_id}/goaccess/update", response_class=HTMLResponse)
+def update_goaccess(request: Request, site_id: int):
     require_login(request)
     site = site_manager.get_site(site_id)
     if not site:
         raise HTTPException(status_code=404)
-    output = site_manager.generate_awstats_report(site)
+    output = site_manager.generate_goaccess_report(site)
     site = site_manager.get_site(site_id)
     return templates.TemplateResponse("site_detail.html", {"request": request, "site": site, "output": output})
+
+
+@app.post("/sites/{site_id}/awstats/update", response_class=HTMLResponse)
+def update_awstats(request: Request, site_id: int):
+    return update_goaccess(request, site_id)
 
 
 @app.post("/sites/{site_id}/upload-certificate", response_class=HTMLResponse)

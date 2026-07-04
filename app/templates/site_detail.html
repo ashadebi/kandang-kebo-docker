@@ -93,17 +93,17 @@
 </section>
 
 <section class="panel" style="margin-top: 16px;">
-  <h2>AWStats</h2>
-  {% if site.awstats.ready %}
+  <h2>GoAccess</h2>
+  {% if site.goaccess.ready %}
   <p><b>Status:</b> Report ready</p>
-  <p><b>Last update:</b> {{ site.awstats.updated_at }}</p>
-  <p><a class="button secondary" href="https://{{ site.domain }}/awstats/" target="_blank" rel="noopener">Open AWStats</a></p>
+  <p><b>Last update:</b> {{ site.goaccess.updated_at }}</p>
+  <p><a class="button secondary" href="https://{{ site.domain }}/goaccess/" target="_blank" rel="noopener">Open GoAccess</a></p>
   {% else %}
   <p><b>Status:</b> Report belum dibuat</p>
-  <p class="muted">AWStats membaca access.log nginx site lalu membuat HTML static yang bisa dibuka langsung dari domain site.</p>
+  <p class="muted">GoAccess membaca access.log nginx site lalu membuat HTML static yang bisa dibuka langsung dari domain site.</p>
   {% endif %}
-  <form method="post" action="/sites/{{ site.id }}/awstats/update">
-    <button class="secondary" type="submit">Generate AWStats</button>
+  <form method="post" action="/sites/{{ site.id }}/goaccess/update">
+    <button class="secondary" type="submit">Generate GoAccess</button>
   </form>
 </section>
 

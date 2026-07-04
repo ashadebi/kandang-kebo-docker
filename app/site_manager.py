@@ -9,7 +9,7 @@ import tarfile
 from contextlib import suppress
 from datetime import datetime
 from pathlib import Path
-from shutil import copyfile, copyfileobj, copytree, rmtree
+from shutil import copyfileobj, rmtree
 
 from jinja2 import Environment, FileSystemLoader
 
@@ -188,9 +188,7 @@ WEB_GID = 82
 SFTP_PORT_START = 22000
 SFTP_PORT_END = 22999
 CUSTOM_CERT_CONTAINER_DIR = "/custom-certs"
-AWSTATS_PROG = Path("/usr/lib/cgi-bin/awstats.pl")
-AWSTATS_STATIC_PAGES = Path("/usr/share/awstats/tools/awstats_buildstaticpages.pl")
-AWSTATS_ICON_DIR = Path("/usr/share/awstats/icon")
+GOACCESS_BIN = Path("/usr/bin/goaccess")
 
 
 def custom_cert_host_dir(username: str) -> Path:
@@ -252,7 +250,7 @@ def ensure_home(username: str, cms_app: str = "none") -> None:
     for child in [
         "public_html",
         "logs",
-        "awstats",
+        "goaccess",
         "backups/database",
         "backups/files",
         "tmp",
@@ -297,104 +295,52 @@ def render_site_files(site: dict) -> None:
     render_custom_certificates()
 
 
-def awstats_config_name(site: dict) -> str:
-    return re.sub(r"[^A-Za-z0-9_-]+", "-", site["username"])
+def goaccess_report_path(site: dict) -> Path:
+    return home_path(site["username"]) / "goaccess" / "index.html"
 
 
-def awstats_config_path(site: dict) -> Path:
-    return home_path(site["username"]) / "config" / f"awstats.{awstats_config_name(site)}.conf"
-
-
-def awstats_report_path(site: dict) -> Path:
-    return home_path(site["username"]) / "awstats" / "index.html"
-
-
-def awstats_status(site: dict) -> dict:
-    report = awstats_report_path(site)
+def goaccess_status(site: dict) -> dict:
+    report = goaccess_report_path(site)
     if not report.is_file():
         return {"ready": False, "updated_at": None}
     updated = datetime.fromtimestamp(report.stat().st_mtime).strftime("%Y-%m-%d %H:%M:%S")
     return {"ready": True, "updated_at": updated}
 
 
-def render_awstats_config(site: dict) -> Path:
-    config_file = awstats_config_path(site)
-    data_dir = home_path(site["username"]) / "awstats" / "data"
+def generate_goaccess_report(site: dict) -> str:
     log_file = home_path(site["username"]) / "logs" / "access.log"
-    data_dir.mkdir(parents=True, exist_ok=True)
-    config_file.write_text(
-        "\n".join(
-            [
-                f'LogFile="{log_file}"',
-                "LogType=W",
-                "LogFormat=1",
-                f'SiteDomain="{site["domain"]}"',
-                f'HostAliases="www.{site["domain"]} localhost 127.0.0.1"',
-                f'DirData="{data_dir}"',
-                'DirIcons="/awstats/icon"',
-                "DNSLookup=0",
-                "AllowToUpdateStatsFromBrowser=0",
-                "LoadPlugin=\"tooltips\"",
-            ]
-        )
-        + "\n",
-        encoding="utf-8",
-    )
-    return config_file
+    report_dir = home_path(site["username"]) / "goaccess"
+    report_dir.mkdir(parents=True, exist_ok=True)
+    if not log_file.is_file():
+        return "GoAccess belum bisa dibuat karena access.log site belum ada."
+    if not GOACCESS_BIN.is_file():
+        return "GoAccess belum terpasang di container dashboard. Rebuild dashboard untuk mengaktifkan paket goaccess."
+
+    report = goaccess_report_path(site)
+    cmd = [
+        str(GOACCESS_BIN),
+        str(log_file),
+        "--log-format=COMBINED",
+        "--html-report-title",
+        f"Traffic report - {site['domain']}",
+        "--no-global-config",
+        "--ignore-crawlers",
+        "-o",
+        str(report),
+    ]
+    result = subprocess.run(cmd, check=False, text=True, capture_output=True)
+    if result.returncode != 0:
+        return result.stdout + result.stderr
+    docker_manager.recreate_compose_service(home_path(site["username"]) / "compose", "nginx")
+    return f"GoAccess report selesai: https://{site['domain']}/goaccess/"
 
 
-def copy_awstats_assets(site: dict) -> None:
-    report_dir = home_path(site["username"]) / "awstats"
-    target_icons = report_dir / "icon"
-    if AWSTATS_ICON_DIR.is_dir() and not target_icons.exists():
-        copytree(AWSTATS_ICON_DIR, target_icons)
+def awstats_status(site: dict) -> dict:
+    return goaccess_status(site)
 
 
 def generate_awstats_report(site: dict) -> str:
-    log_file = home_path(site["username"]) / "logs" / "access.log"
-    report_dir = home_path(site["username"]) / "awstats"
-    report_dir.mkdir(parents=True, exist_ok=True)
-    if not log_file.is_file():
-        return "AWStats belum bisa dibuat karena access.log site belum ada."
-    if not AWSTATS_PROG.is_file() or not AWSTATS_STATIC_PAGES.is_file():
-        return "AWStats belum terpasang di container dashboard. Rebuild dashboard untuk mengaktifkan paket awstats."
-
-    config_name = awstats_config_name(site)
-    config_dir = home_path(site["username"]) / "config"
-    render_awstats_config(site)
-    copy_awstats_assets(site)
-
-    update_cmd = [
-        "perl",
-        str(AWSTATS_PROG),
-        f"-config={config_name}",
-        f"-configdir={config_dir}",
-        "-update",
-    ]
-    static_cmd = [
-        "perl",
-        str(AWSTATS_STATIC_PAGES),
-        f"-config={config_name}",
-        f"-configdir={config_dir}",
-        f"-dir={report_dir}",
-        f"-awstatsprog={AWSTATS_PROG}",
-    ]
-    update_result = subprocess.run(update_cmd, check=False, text=True, capture_output=True)
-    if update_result.returncode != 0:
-        return update_result.stdout + update_result.stderr
-    static_result = subprocess.run(static_cmd, check=False, text=True, capture_output=True)
-    if static_result.returncode != 0:
-        return static_result.stdout + static_result.stderr
-
-    generated = report_dir / f"awstats.{config_name}.html"
-    if not generated.is_file():
-        html_reports = sorted(report_dir.glob("awstats.*.html"))
-        if not html_reports:
-            return "AWStats selesai diproses, tapi file HTML report tidak ditemukan."
-        generated = html_reports[0]
-    copyfile(generated, report_dir / "index.html")
-    docker_manager.recreate_compose_service(home_path(site["username"]) / "compose", "nginx")
-    return f"AWStats report selesai: https://{site['domain']}/awstats/"
+    return generate_goaccess_report(site)
 
 
 def create_site(
@@ -572,7 +518,8 @@ def get_site(site_id: int) -> dict | None:
     site["home"] = str(host_home_path(site["username"]))
     site["compose"] = str(host_home_path(site["username"]) / "compose" / "docker-compose.yml")
     site["custom_certificate"] = has_custom_certificate(site["username"])
-    site["awstats"] = awstats_status(site)
+    site["goaccess"] = goaccess_status(site)
+    site["awstats"] = site["goaccess"]
     site["containers"] = docker_manager.container_status(f"site-{site['username']}-")
     return site
 

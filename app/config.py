@@ -7,6 +7,7 @@ class Settings:
     admin_username = os.getenv("ADMIN_USERNAME", "admin")
     admin_password = os.getenv("ADMIN_PASSWORD", "admin")
     session_secret = os.getenv("SESSION_SECRET", "change-me")
+    session_idle_timeout_seconds = int(os.getenv("SESSION_IDLE_TIMEOUT_SECONDS", "1800"))
     host_home_root = Path(os.getenv("HOST_HOME_ROOT", "/home"))
     container_home_root = Path("/host-home")
     project_root = Path(os.getenv("HOST_PROJECT_ROOT", "/opt/docker-hosting-panel"))

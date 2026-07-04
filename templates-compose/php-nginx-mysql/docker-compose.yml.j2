@@ -19,13 +19,14 @@ services:
       - /var/run
     volumes:
       - {{ host_home }}/public_html:/var/www/html
-      - {{ host_home }}/awstats:/var/www/awstats:ro
+      - {{ host_home }}/goaccess:/var/www/goaccess:ro
       - {{ host_home }}/logs:/var/log/nginx
       - {{ host_home }}/config/nginx.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:
       - php
     labels:
       - traefik.enable=true
+      - traefik.docker.network=hosting-public
       - traefik.http.routers.site-{{ username }}-web.rule=Host(`{{ domain }}`)
       - traefik.http.routers.site-{{ username }}-web.entrypoints=web
       - traefik.http.routers.site-{{ username }}-web.middlewares=site-{{ username }}-https-redirect
@@ -33,9 +34,8 @@ services:
       - traefik.http.middlewares.site-{{ username }}-https-redirect.redirectscheme.permanent=true
       - traefik.http.routers.site-{{ username }}.rule=Host(`{{ domain }}`)
       - traefik.http.routers.site-{{ username }}.entrypoints=websecure
-{% if custom_certificate %}
       - traefik.http.routers.site-{{ username }}.tls=true
-{% else %}
+{% if not custom_certificate %}
       - traefik.http.routers.site-{{ username }}.tls.certresolver=letsencrypt
 {% endif %}
       - traefik.http.services.site-{{ username }}.loadbalancer.server.port=80

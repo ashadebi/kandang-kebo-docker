@@ -49,6 +49,7 @@ services:
       - ${HOST_PROJECT_ROOT:-/opt/docker-hosting-panel}:${HOST_PROJECT_ROOT:-/opt/docker-hosting-panel}
     labels:
       - traefik.enable=true
+      - traefik.docker.network=hosting-public
       - traefik.http.routers.hosting-panel-web.rule=Host(`${PANEL_DOMAIN}`)
       - traefik.http.routers.hosting-panel-web.entrypoints=web
       - traefik.http.routers.hosting-panel-web.middlewares=hosting-panel-https-redirect
@@ -56,6 +57,7 @@ services:
       - traefik.http.middlewares.hosting-panel-https-redirect.redirectscheme.permanent=true
       - traefik.http.routers.hosting-panel.rule=Host(`${PANEL_DOMAIN}`)
       - traefik.http.routers.hosting-panel.entrypoints=websecure
+      - traefik.http.routers.hosting-panel.tls=true
       - traefik.http.routers.hosting-panel.tls.certresolver=letsencrypt
       - traefik.http.services.hosting-panel.loadbalancer.server.port=8000
     networks:
@@ -96,6 +98,7 @@ services:
       - ./app/static/404-background.png:/usr/share/nginx/html/404-background.png:ro
     labels:
       - traefik.enable=true
+      - traefik.docker.network=hosting-public
       - traefik.http.routers.hosting-notfound-web.rule=HostRegexp(`${FALLBACK_HOST_REGEXP:-.+}`)
       - traefik.http.routers.hosting-notfound-web.entrypoints=web
       - traefik.http.routers.hosting-notfound-web.priority=1
