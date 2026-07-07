@@ -1,16 +1,23 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="panel" style="max-width: 420px; margin: 60px auto;">
-  <h1>Login Admin</h1>
-  {% if error %}<div class="notice">{{ error }}</div>{% endif %}
-  <form class="grid" method="post" action="/login">
+<div class="login-card">
+  <div class="brand-line">
+    <span>🐳</span><br>
+    <strong>Docker Hosting Panel</strong>
+  </div>
+  <h1>Login</h1>
+  <p class="muted" style="text-align: center; margin-bottom: 24px;">Admin dan customer login di sini. Customer gunakan username + password SFTP.</p>
+
+  {% if error %}<div class="notice notice-error">{{ error }}</div>{% endif %}
+
+  <form class="stack" method="post" action="/login">
     <label>Username
-      <input name="username" autocomplete="username" required>
+      <input name="username" autocomplete="username" required autofocus>
     </label>
     <label>Password
       <input name="password" type="password" autocomplete="current-password" required>
     </label>
-    <button type="submit">Masuk</button>
+    <button type="submit" style="margin-top: 8px;">Masuk</button>
   </form>
 </div>
 {% endblock %}

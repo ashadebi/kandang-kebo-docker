@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
+{% set is_admin = current_user and current_user.role == "admin" %}
 <div class="actions" style="justify-content: space-between; align-items: center; margin-bottom: 18px;">
   <div>
     <h1>{{ site.username }}</h1>
@@ -7,7 +8,7 @@
   </div>
   <div class="actions">
     <a class="button secondary" href="/sites/{{ site.id }}/edit">Edit</a>
-    <a class="button secondary" href="/">Back</a>
+    <a class="button secondary" href="{{ '/u/' ~ site.username if not is_admin else '/' }}">Back</a>
   </div>
 </div>
 
@@ -20,9 +21,11 @@
       <form method="post" action="/sites/{{ site.id }}/down"><button class="danger" type="submit">Stop</button></form>
       <form method="post" action="/sites/{{ site.id }}/logs"><button class="secondary" type="submit">Logs</button></form>
       <form method="post" action="/sites/{{ site.id }}/backup-db"><button class="secondary" type="submit">Backup DB</button></form>
+      {% if is_admin %}
       <form method="post" action="/sites/{{ site.id }}/delete" onsubmit="return confirm('Delete site {{ site.username }} beserta container, volume database, dan file public_html?');">
         <button class="danger" type="submit">Delete Site</button>
       </form>
+      {% endif %}
     </div>
   </section>
 
@@ -30,8 +33,16 @@
     <h2>SFTP Access</h2>
     <p><b>Host:</b> server-ip atau ftp.{{ site.domain }}</p>
     <p><b>Port:</b> {{ site.sftp_port }}</p>
-    <p><b>Username:</b> {{ site.username }}</p>
-    <p><b>Password:</b> {{ site.sftp_password }}</p>
+    <p>
+      <b>Username:</b>
+      <code class="credential" id="sftp-user">{{ site.username }}</code>
+      <button type="button" class="copy-btn" data-target="sftp-user">Copy</button>
+    </p>
+    <p>
+      <b>Password:</b>
+      <code class="credential" id="sftp-pass">{{ site.sftp_password }}</code>
+      <button type="button" class="copy-btn" data-target="sftp-pass">Copy</button>
+    </p>
     <p><b>Web root:</b> /home/{{ site.username }}/public_html</p>
   </section>
 </div>
@@ -40,9 +51,21 @@
   <section class="panel">
     <h2>MySQL Access</h2>
     <p><b>Host:</b> db</p>
-    <p><b>Database:</b> {{ site.db_name }}</p>
-    <p><b>Username:</b> {{ site.db_user }}</p>
-    <p><b>Password:</b> {{ site.db_password }}</p>
+    <p>
+      <b>Database:</b>
+      <code class="credential" id="db-name">{{ site.db_name }}</code>
+      <button type="button" class="copy-btn" data-target="db-name">Copy</button>
+    </p>
+    <p>
+      <b>Username:</b>
+      <code class="credential" id="db-user">{{ site.db_user }}</code>
+      <button type="button" class="copy-btn" data-target="db-user">Copy</button>
+    </p>
+    <p>
+      <b>Password:</b>
+      <code class="credential" id="db-pass">{{ site.db_password }}</code>
+      <button type="button" class="copy-btn" data-target="db-pass">Copy</button>
+    </p>
     <p class="muted">Credential ini dipakai dari container aplikasi site. Untuk restore manual, gunakan form upload di sebelah.</p>
   </section>
 
@@ -70,16 +93,16 @@
   <p><b>Status:</b> Let's Encrypt automatic</p>
   <p class="muted">Jika user punya sertifikat berbayar sendiri, upload fullchain/certificate dan private key di sini.</p>
   <form method="post" action="/sites/{{ site.id }}/upload-certificate" enctype="multipart/form-data" class="stack">
-    <label>
-      Certificate / fullchain PEM
-      <input name="certificate_file" type="file" accept=".pem,.crt,.cer" required>
-    </label>
-    <label>
-      Private key PEM
-      <input name="private_key_file" type="file" accept=".pem,.key" required>
-    </label>
-    <button class="secondary" type="submit">Upload Certificate</button>
-  </form>
+      <label>
+        Certificate / fullchain PEM
+        <input name="certificate_file" type="file" accept=".pem,.crt,.cer" required>
+      </label>
+      <label>
+        Private key PEM
+        <input name="private_key_file" type="file" accept=".pem,.key" required>
+      </label>
+      <button class="secondary" type="submit">Upload Certificate</button>
+    </form>
   {% endif %}
 </section>
 
@@ -127,4 +150,18 @@
   <pre>{{ output }}</pre>
 </section>
 {% endif %}
+
+<script>
+document.addEventListener('click', function(e) {
+  if (e.target.classList.contains('copy-btn')) {
+    const target = document.getElementById(e.target.dataset.target);
+    if (target) {
+      navigator.clipboard.writeText(target.textContent.trim());
+      const original = e.target.textContent;
+      e.target.textContent = 'Copied!';
+      setTimeout(() => { e.target.textContent = original; }, 1200);
+    }
+  }
+});
+</script>
 {% endblock %}
