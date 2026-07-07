@@ -107,10 +107,46 @@
 </section>
 
 <section class="panel" style="margin-top: 16px;">
+  <h2>🛡️ Web Application Firewall</h2>
+  <p class="muted">Centang opsi yang ingin diaktifkan. Save → Traefik middleware otomatis regenerate dan nginx container di-recreate.</p>
+
+  {% if site.waf_enabled %}
+  <p><b>Status:</b> <span style="color: var(--success); font-weight: 600;">● ACTIVE</span></p>
+  {% else %}
+  <p><b>Status:</b> <span style="color: var(--text-muted);">○ Disabled</span></p>
+  {% endif %}
+
+  <form method="post" action="/sites/{{ site.id }}/waf" class="grid">
+    <label class="checkline">
+      <input name="waf_enabled" type="checkbox" value="true" {% if site.waf_enabled %}checked{% endif %}>
+      <strong>Aktifkan WAF</strong>
+    </label>
+    <label>Rate Limit (req/s per IP, 0 = off)
+      <input name="waf_rate_limit_rps" type="number" min="0" max="10000" step="1"
+             value="{{ site.waf_rate_limit_rps or 0 }}">
+    </label>
+    <label class="checkline">
+      <input name="waf_sqli" type="checkbox" value="true" {% if site.waf_sqli %}checked{% endif %}>
+      SQL Injection protection
+    </label>
+    <label class="checkline">
+      <input name="waf_path_traversal" type="checkbox" value="true" {% if site.waf_path_traversal %}checked{% endif %}>
+      Path Traversal / LFI protection
+    </label>
+    <label class="checkline">
+      <input name="waf_owasp_crs" type="checkbox" value="true" {% if site.waf_owasp_crs %}checked{% endif %}>
+      OWASP CRS — block XSS + scanner UA (sqlmap, nikto, nmap)
+    </label>
+    <div class="actions">
+      <button type="submit">Save WAF Settings</button>
+    </div>
+  </form>
+</section>
+
+<section class="panel" style="margin-top: 16px;">
   <h2>Runtime</h2>
     <p><b>CMS:</b> {{ site.cms_app }}</p>
     <p><b>Image:</b> {{ site.custom_image or "Default image" }}</p>
-    <p><b>Coraza WAF:</b> {{ "Enabled" if site.waf_enabled else "Disabled" }}</p>
     <p><b>php.ini preset:</b> {{ site.php_ini_preset }}</p>
     <p><b>Resource limit:</b> {{ site.resource_preset }}</p>
 </section>

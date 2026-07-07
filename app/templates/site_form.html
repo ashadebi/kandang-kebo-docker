@@ -64,10 +64,31 @@
         <option value="large" {% if site and site.resource_preset == "large" %}selected{% endif %}>Large - busy site</option>
       </select>
     </label>
-    <label class="checkline">
-      <input name="waf_enabled" type="checkbox" value="true" {% if site and site.waf_enabled %}checked{% endif %}>
-      Enable Coraza WAF
-    </label>
+    <fieldset class="waf-options">
+      <legend>🛡️ Web Application Firewall (Coraza WAF)</legend>
+      <p class="muted">Aktifkan opsi WAF di bawah. Centang kotak untuk enable, isi angka untuk rate-limit.</p>
+      <label class="checkline">
+        <input name="waf_enabled" type="checkbox" value="true" {% if site and site.waf_enabled %}checked{% endif %}>
+        <strong>Aktifkan WAF</strong> — nyalakan proteksi Coraza untuk site ini
+      </label>
+      <label>Rate Limit (request per detik per IP, 0 = off)
+        <input name="waf_rate_limit_rps" type="number" min="0" max="10000" step="1"
+               value="{{ site.waf_rate_limit_rps if site and site.waf_rate_limit_rps else 0 }}">
+        <span class="muted">Misal: <code>10</code> berarti tiap IP dibatasi 10 req/s. <code>0</code> = unlimited.</span>
+      </label>
+      <label class="checkline">
+        <input name="waf_sqli" type="checkbox" value="true" {% if site and site.waf_sqli %}checked{% endif %}>
+        SQL Injection protection — block payload <code>' OR 1=1</code>, <code>UNION SELECT</code>, dll
+      </label>
+      <label class="checkline">
+        <input name="waf_path_traversal" type="checkbox" value="true" {% if site and site.waf_path_traversal %}checked{% endif %}>
+        Path Traversal & Local File Inclusion — block <code>../../../etc/passwd</code>, <code>php://</code>, dll
+      </label>
+      <label class="checkline">
+        <input name="waf_owasp_crs" type="checkbox" value="true" {% if site and site.waf_owasp_crs %}checked{% endif %}>
+        OWASP CRS / Scanner block — block XSS, scanner User-Agent (sqlmap, nikto, nmap), common attack patterns
+      </label>
+    </fieldset>
     <div class="actions">
       <button type="submit">{{ "Save Changes" if site else "Create" }}</button>
       <a class="button secondary" href="{{ '/sites/' ~ site.id if site and site.id else '/' }}">Cancel</a>

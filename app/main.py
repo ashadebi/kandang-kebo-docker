@@ -205,6 +205,10 @@ def create_site(
     php_version: str = Form("8.3"),
     db_engine: str = Form("mariadb"),
     waf_enabled: bool = Form(False),
+    waf_rate_limit_rps: int = Form(0),
+    waf_sqli: bool = Form(False),
+    waf_path_traversal: bool = Form(False),
+    waf_owasp_crs: bool = Form(False),
     php_ini_preset: str = Form("standard"),
     resource_preset: str = Form("medium"),
     cms_app: str = Form("none"),
@@ -218,6 +222,10 @@ def create_site(
             php_version,
             db_engine,
             waf_enabled,
+            waf_rate_limit_rps,
+            waf_sqli,
+            waf_path_traversal,
+            waf_owasp_crs,
             php_ini_preset,
             resource_preset,
             cms_app,
@@ -230,6 +238,10 @@ def create_site(
             "php_version": php_version,
             "db_engine": db_engine,
             "waf_enabled": waf_enabled,
+            "waf_rate_limit_rps": waf_rate_limit_rps,
+            "waf_sqli": waf_sqli,
+            "waf_path_traversal": waf_path_traversal,
+            "waf_owasp_crs": waf_owasp_crs,
             "php_ini_preset": php_ini_preset,
             "resource_preset": resource_preset,
             "cms_app": cms_app,
@@ -256,6 +268,10 @@ def update_site(
     php_version: str = Form("8.3"),
     db_engine: str = Form("mariadb"),
     waf_enabled: bool = Form(False),
+    waf_rate_limit_rps: int = Form(0),
+    waf_sqli: bool = Form(False),
+    waf_path_traversal: bool = Form(False),
+    waf_owasp_crs: bool = Form(False),
     php_ini_preset: str = Form("standard"),
     resource_preset: str = Form("medium"),
     cms_app: str = Form("none"),
@@ -272,6 +288,10 @@ def update_site(
             php_version,
             db_engine,
             waf_enabled,
+            waf_rate_limit_rps,
+            waf_sqli,
+            waf_path_traversal,
+            waf_owasp_crs,
             php_ini_preset,
             resource_preset,
             cms_app,
@@ -284,6 +304,10 @@ def update_site(
                 "php_version": php_version,
                 "db_engine": db_engine,
                 "waf_enabled": waf_enabled,
+                "waf_rate_limit_rps": waf_rate_limit_rps,
+                "waf_sqli": waf_sqli,
+                "waf_path_traversal": waf_path_traversal,
+                "waf_owasp_crs": waf_owasp_crs,
                 "php_ini_preset": php_ini_preset,
                 "resource_preset": resource_preset,
                 "cms_app": cms_app,
@@ -292,6 +316,46 @@ def update_site(
         )
         return templates.TemplateResponse("site_form.html", _context(request, {"error": str(exc), "site": site}))
     return RedirectResponse(f"/sites/{site_id}", status_code=303)
+
+
+@app.post("/sites/{site_id}/waf", response_class=HTMLResponse)
+async def toggle_waf(
+    request: Request,
+    site_id: int,
+    waf_enabled: bool = Form(False),
+    waf_rate_limit_rps: int = Form(0),
+    waf_sqli: bool = Form(False),
+    waf_path_traversal: bool = Form(False),
+    waf_owasp_crs: bool = Form(False),
+):
+    site = site_manager.get_site(site_id)
+    if not site:
+        raise HTTPException(status_code=404)
+    require_admin(request)
+    site_manager.update_site_options(
+        site,
+        site["domain"],
+        site["php_version"],
+        site["db_engine"],
+        waf_enabled,
+        waf_rate_limit_rps,
+        waf_sqli,
+        waf_path_traversal,
+        waf_owasp_crs,
+        site["php_ini_preset"],
+        site["resource_preset"],
+        site["cms_app"],
+        site["custom_image"],
+    )
+    # Recreate site nginx so new middleware chain loads
+    try:
+        site_manager.recreate_nginx_only(site)
+    except Exception as exc:
+        output = f"Settings saved, but nginx reload failed: {exc}"
+        site = site_manager.get_site(site_id)
+        return templates.TemplateResponse("site_detail.html", _context(request, {"site": site, "output": output, "goaccess": site_manager.goaccess_status(site)}))
+    site = site_manager.get_site(site_id)
+    return templates.TemplateResponse("site_detail.html", _context(request, {"site": site, "output": "WAF settings updated.", "goaccess": site_manager.goaccess_status(site)}))
 
 
 @app.post("/sites/{site_id}/delete")

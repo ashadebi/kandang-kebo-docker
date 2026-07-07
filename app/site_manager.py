@@ -11,6 +11,7 @@ from datetime import datetime
 from pathlib import Path
 from shutil import copyfileobj, rmtree
 
+import yaml
 from jinja2 import Environment, FileSystemLoader
 
 from . import docker_manager
@@ -199,6 +200,24 @@ def custom_cert_container_path(username: str, filename: str) -> str:
     return f"{CUSTOM_CERT_CONTAINER_DIR}/{username}/{filename}"
 
 
+def traefik_dir() -> Path:
+    """Path to traefik/dynamic in the project root.
+
+    Both dashboard container (RW) and Traefik container (RO via docker-compose volume mount)
+    access this dir. Uses $HOST_PROJECT_ROOT when running inside container so writes
+    land in the bind-mounted project root, falling back to file-relative path when
+    running on host for tests/CI.
+    """
+    env_root = os.environ.get("HOST_PROJECT_ROOT")
+    if env_root:
+        out = Path(env_root) / "traefik" / "dynamic"
+    else:
+        project_root = Path(__file__).resolve().parent.parent
+        out = project_root / "traefik" / "dynamic"
+    out.mkdir(parents=True, exist_ok=True)
+    return out
+
+
 def custom_cert_dynamic_path() -> Path:
     return settings.project_root / "traefik" / "dynamic" / "custom-certs.yml"
 
@@ -271,6 +290,93 @@ def ensure_home(username: str, cms_app: str = "none") -> None:
 
     ensure_tree_owner(base / "public_html")
     ensure_tree_owner(base / "tmp")
+
+
+def recreate_nginx_only(site: dict) -> None:
+    """Re-render compose + recreate nginx container only (so new Traefik labels load)."""
+    render_site_files(site)
+    docker_manager.recreate_compose_service(home_path(site["username"]) / "compose", "nginx")
+
+
+def render_traefik_waf() -> None:
+    """Generate /traefik/dynamic/site-wafs.yml with one Coraza middleware per WAF-enabled site.
+
+    Each enabled site gets a chain of middlewares referenced via labels on the site router:
+        ratelimit-{username}@file (if rate_limit > 0) -> waf-{username}@file
+    """
+    import yaml as _yaml
+    out = traefik_dir() / "site-wafs.yml"
+    sites = list_sites()
+
+    middlewares = {}
+
+    for site in sites:
+        username = site["username"]
+        waf_on = bool(site.get("waf_enabled"))
+        if not waf_on:
+            continue
+
+        rate = int(site.get("waf_rate_limit_rps") or 0)
+        sqli = bool(site.get("waf_sqli"))
+        path_trav = bool(site.get("waf_path_traversal"))
+        owasp = bool(site.get("waf_owasp_crs"))
+
+        directives = [
+            "SecRuleEngine On",
+            "SecRequestBodyAccess On",
+            "SecResponseBodyAccess On",
+            "SecDebugLog /dev/stdout",
+            "SecDebugLogLevel 3",
+            'SecRule REQUEST_HEADERS:Content-Type "@rx text/xml" "id:9001,phase:1,log,pass,nolog,ctl:requestBodyProcessor=XML"',
+        ]
+        rid = 9100
+        if sqli:
+            rid += 1
+            directives.append(
+                'SecRule ARGS|ARGS_NAMES|REQUEST_URI|REQUEST_BODY "@rx (?i)(\\bor\\b\\s+\\d+|union\\s+select|sleep\\(|benchmark\\(|extractvalue\\(|load_file\\(|0x[0-9a-f]+)" '
+                f'"id:{rid},phase:2,log,deny,status:403,msg:\"SQLi attempt blocked\""'
+            )
+        if path_trav:
+            rid += 1
+            directives.append(
+                'SecRule ARGS|ARGS_NAMES|REQUEST_URI "@rx (\\.\\./|/etc/passwd|/etc/shadow|php://|file://|expect://|data:)" '
+                f'"id:{rid},phase:2,log,deny,status:403,msg:\"Path traversal / LFI blocked\""'
+            )
+        if owasp:
+            rid += 1
+            directives.append(
+                'SecRule REQUEST_HEADERS:User-Agent "@rx (?i)(nikto|sqlmap|nmap|masscan|acunetix|wfuzz|gobuster|dirsearch|hydra)" '
+                f'"id:{rid},phase:1,log,deny,status:403,msg:\"Scanner blocked (OWASP)\"'
+            )
+            rid += 1
+            directives.append(
+                'SecRule ARGS|REQUEST_URI "@rx <\\s*/?\\s*(script|iframe|object|embed)" '
+                f'"id:{rid},phase:2,log,deny,status:403,msg:\"XSS attempt blocked\""'
+            )
+            rid += 1
+            directives.append(
+                'SecRule REQUEST_METHOD "!@pm GET POST HEAD" '
+                f'"id:{rid},phase:1,log,deny,status:405,msg:\"HTTP method not allowed\""'
+            )
+
+        middlewares[f"waf-{username}"] = {
+            "plugin": {"coraza": {"directives": directives}}
+        }
+
+        if rate > 0:
+            middlewares[f"ratelimit-{username}"] = {
+                "rateLimit": {
+                    "average": rate,
+                    "burst": rate,  # burst == average, so any extra triggers limit immediately
+                    "period": "1s",
+                }
+            }
+
+    payload = {"http": {"middlewares": middlewares or {"waf-empty": {}}}}
+    out.write_text("# Auto-generated per-site WAF middlewares (do not edit)\n", encoding="utf-8")
+    with out.open("a", encoding="utf-8") as fh:
+        _yaml.safe_dump(payload, fh, default_flow_style=False, sort_keys=False, allow_unicode=True)
+
 
 
 def render_site_files(site: dict) -> None:
@@ -349,6 +455,10 @@ def create_site(
     php_version: str,
     db_engine: str,
     waf_enabled: bool = False,
+    waf_rate_limit_rps: int = 0,
+    waf_sqli: bool = False,
+    waf_path_traversal: bool = False,
+    waf_owasp_crs: bool = False,
     php_ini_preset: str = "standard",
     resource_preset: str = "medium",
     cms_app: str = "none",
@@ -378,6 +488,10 @@ def create_site(
         "sftp_password": sftp_password,
         "sftp_port": sftp_port,
         "waf_enabled": waf_enabled,
+        "waf_rate_limit_rps": int(waf_rate_limit_rps or 0),
+        "waf_sqli": bool(waf_sqli),
+        "waf_path_traversal": bool(waf_path_traversal),
+        "waf_owasp_crs": bool(waf_owasp_crs),
         "php_ini_preset": php_ini_preset,
         "resource_preset": resource_preset,
         "cms_app": cms_app,
@@ -389,9 +503,10 @@ def create_site(
         """
         INSERT INTO sites (
             username, domain, php_version, db_engine, db_name, db_user, db_password,
-            sftp_password, sftp_port, waf_enabled, php_ini_preset, resource_preset, cms_app, custom_image
+            sftp_password, sftp_port, waf_enabled, waf_rate_limit_rps, waf_sqli, waf_path_traversal, waf_owasp_crs,
+            php_ini_preset, resource_preset, cms_app, custom_image
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             username,
@@ -404,6 +519,10 @@ def create_site(
             sftp_password,
             sftp_port,
             int(waf_enabled),
+            int(waf_rate_limit_rps or 0),
+            int(bool(waf_sqli)),
+            int(bool(waf_path_traversal)),
+            int(bool(waf_owasp_crs)),
             php_ini_preset,
             resource_preset,
             cms_app,
@@ -411,6 +530,7 @@ def create_site(
         ),
     )
     render_users_conf()
+    render_traefik_waf()
     return site
 
 
@@ -420,6 +540,10 @@ def update_site_options(
     php_version: str,
     db_engine: str,
     waf_enabled: bool = False,
+    waf_rate_limit_rps: int = 0,
+    waf_sqli: bool = False,
+    waf_path_traversal: bool = False,
+    waf_owasp_crs: bool = False,
     php_ini_preset: str = "standard",
     resource_preset: str = "medium",
     cms_app: str = "none",
@@ -440,6 +564,10 @@ def update_site_options(
             "php_version": php_version,
             "db_engine": db_engine,
             "waf_enabled": waf_enabled,
+            "waf_rate_limit_rps": int(waf_rate_limit_rps or 0),
+            "waf_sqli": bool(waf_sqli),
+            "waf_path_traversal": bool(waf_path_traversal),
+            "waf_owasp_crs": bool(waf_owasp_crs),
             "php_ini_preset": php_ini_preset,
             "resource_preset": resource_preset,
             "cms_app": cms_app,
@@ -453,6 +581,7 @@ def update_site_options(
         """
         UPDATE sites
         SET domain = ?, php_version = ?, db_engine = ?, waf_enabled = ?,
+            waf_rate_limit_rps = ?, waf_sqli = ?, waf_path_traversal = ?, waf_owasp_crs = ?,
             php_ini_preset = ?, resource_preset = ?, cms_app = ?, custom_image = ?
         WHERE id = ?
         """,
@@ -461,6 +590,10 @@ def update_site_options(
             php_version,
             db_engine,
             int(waf_enabled),
+            int(waf_rate_limit_rps or 0),
+            int(bool(waf_sqli)),
+            int(bool(waf_path_traversal)),
+            int(bool(waf_owasp_crs)),
             php_ini_preset,
             resource_preset,
             cms_app,
@@ -468,6 +601,7 @@ def update_site_options(
             site["id"],
         ),
     )
+    render_traefik_waf()
     return updated
 
 

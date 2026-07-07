@@ -49,6 +49,10 @@ def init_db() -> None:
                 sftp_password TEXT NOT NULL,
                 sftp_port INTEGER NOT NULL DEFAULT 0,
                 waf_enabled INTEGER NOT NULL DEFAULT 0,
+                waf_rate_limit_rps INTEGER NOT NULL DEFAULT 0,
+                waf_sqli INTEGER NOT NULL DEFAULT 0,
+                waf_path_traversal INTEGER NOT NULL DEFAULT 0,
+                waf_owasp_crs INTEGER NOT NULL DEFAULT 0,
                 php_ini_preset TEXT NOT NULL DEFAULT 'standard',
                 resource_preset TEXT NOT NULL DEFAULT 'medium',
                 cms_app TEXT NOT NULL DEFAULT 'none',
@@ -63,6 +67,14 @@ def init_db() -> None:
         columns = {row["name"] for row in conn.execute("PRAGMA table_info(sites)").fetchall()}
         if "waf_enabled" not in columns:
             conn.execute("ALTER TABLE sites ADD COLUMN waf_enabled INTEGER NOT NULL DEFAULT 0")
+        if "waf_rate_limit_rps" not in columns:
+            conn.execute("ALTER TABLE sites ADD COLUMN waf_rate_limit_rps INTEGER NOT NULL DEFAULT 0")
+        if "waf_sqli" not in columns:
+            conn.execute("ALTER TABLE sites ADD COLUMN waf_sqli INTEGER NOT NULL DEFAULT 0")
+        if "waf_path_traversal" not in columns:
+            conn.execute("ALTER TABLE sites ADD COLUMN waf_path_traversal INTEGER NOT NULL DEFAULT 0")
+        if "waf_owasp_crs" not in columns:
+            conn.execute("ALTER TABLE sites ADD COLUMN waf_owasp_crs INTEGER NOT NULL DEFAULT 0")
         if "php_ini_preset" not in columns:
             conn.execute("ALTER TABLE sites ADD COLUMN php_ini_preset TEXT NOT NULL DEFAULT 'standard'")
         if "resource_preset" not in columns:

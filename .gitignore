@@ -7,3 +7,6 @@ data/custom-certs/
 data/sftp/ssh_host_*_key
 data/sftp/ssh_host_*_key.pub
 *.log
+
+# Auto-generated per-site WAF middlewares (created at runtime by render_traefik_waf)
+traefik/dynamic/site-wafs.yml
