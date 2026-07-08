@@ -5,6 +5,7 @@ services:
     image: traefik:v3.2
     container_name: hosting-traefik
     restart: unless-stopped
+    userns_mode: "host"
     security_opt:
       - no-new-privileges:true
     cap_drop:
@@ -37,6 +38,7 @@ services:
     build: .
     container_name: hosting-dashboard
     restart: unless-stopped
+    userns_mode: "host"
     pids_limit: 256
     security_opt:
       - no-new-privileges:true

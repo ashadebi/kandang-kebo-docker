@@ -13,6 +13,7 @@ Built for `ashadebi/kandang-kebo-docker`.
   - admin can create, edit, delete, and operate all sites.
   - user accounts can access only their own site panel.
 - One Docker Compose project per site.
+- Compatible with Docker hosts using `userns-remap`; infrastructure containers that need the Docker socket run with host user namespace while customer site containers remain remapped.
 - Per-site containers:
   - Nginx
   - PHP-FPM or CMS image
