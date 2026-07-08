@@ -6,6 +6,8 @@ services:
     container_name: hosting-traefik
     restart: unless-stopped
     userns_mode: "host"
+    environment:
+      DOCKER_API_VERSION: "1.40"
     security_opt:
       - no-new-privileges:true
     cap_drop:
