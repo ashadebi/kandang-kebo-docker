@@ -145,11 +145,14 @@ export ADMIN_PASSWORD='change-this-to-a-strong-password'
 export SESSION_SECRET='long-random-secret'
 export HOST_HOME_ROOT=/home
 export HOST_PROJECT_ROOT=/opt/docker-hosting-panel
+export SFTP_PORT=2222
 export FALLBACK_HOST_REGEXP='.+\\.example\\.com'
 ./scripts/deploy-vps.sh root@SERVER_IP SSH_PORT
 ```
 
 The script will install host packages, upload the project, write `.env`, generate SFTP host keys, and start the Docker stack.
+
+The deploy script installs Docker CE with the Compose v2 plugin on fresh Debian hosts. During redeploy it preserves runtime data such as `.env`, `data/panel.sqlite`, Let's Encrypt certificates, custom certificates, generated SFTP host keys, and generated per-site WAF middleware.
 
 ## SFTP Model
 
