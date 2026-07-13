@@ -49,8 +49,11 @@
 
 <div class="grid two" style="margin-top: 16px;">
   <section class="panel">
-    <h2>MySQL Access</h2>
+    {% set db_label = "PostgreSQL" if site.db_engine == "postgresql" else "MySQL/MariaDB" %}
+    <h2>{{ db_label }} Access</h2>
     <p><b>Host:</b> db</p>
+    <p><b>Port:</b> {{ "5432" if site.db_engine == "postgresql" else "3306" }}</p>
+    <p><b>Version:</b> {{ site.db_version or ("16" if site.db_engine == "postgresql" else "11.4") }}</p>
     <p>
       <b>Database:</b>
       <code class="credential" id="db-name">{{ site.db_name }}</code>
@@ -146,6 +149,7 @@
 <section class="panel" style="margin-top: 16px;">
   <h2>Runtime</h2>
     <p><b>CMS:</b> {{ site.cms_app }}</p>
+    <p><b>Database:</b> {{ "PostgreSQL" if site.db_engine == "postgresql" else "MariaDB" }} {{ site.db_version or ("16" if site.db_engine == "postgresql" else "11.4") }}</p>
     <p><b>Image:</b> {{ site.custom_image or "Default image" }}</p>
     <p><b>php.ini preset:</b> {{ site.php_ini_preset }}</p>
     <p><b>Resource limit:</b> {{ site.resource_preset }}</p>

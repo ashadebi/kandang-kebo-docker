@@ -15,7 +15,7 @@ import yaml
 from jinja2 import Environment, FileSystemLoader
 
 from . import docker_manager
-from .config import settings
+from .config import local_fromtimestamp, settings
 from .database import execute, query_all, query_one
 from .sftp_manager import render_users_conf
 
@@ -108,6 +108,49 @@ CMS_IMAGES = {
         "8.4": "drupal:php8.4-fpm-alpine",
     },
 }
+DB_ENGINES = {
+    "mariadb": {
+        "label": "MariaDB",
+        "image_template": "mariadb:{version}",
+        "host": "db",
+        "port": "3306",
+        "backup_command": "mariadb-dump",
+        "restore_command": "mariadb",
+        "wordpress_host": "db:3306",
+        "joomla_host": "db:3306",
+    },
+    "postgresql": {
+        "label": "PostgreSQL",
+        "image_template": "postgres:{version}-alpine",
+        "host": "db",
+        "port": "5432",
+        "backup_command": "pg_dump",
+        "restore_command": "psql",
+        "wordpress_host": "db:5432",
+        "joomla_host": "db:5432",
+    },
+}
+DB_VERSIONS = {
+    "mariadb": {
+        "11.4": "MariaDB 11.4 LTS",
+    },
+    "postgresql": {
+        "18": "PostgreSQL 18 latest minor",
+        "18.4": "PostgreSQL 18.4",
+        "17": "PostgreSQL 17 latest minor",
+        "17.10": "PostgreSQL 17.10",
+        "16": "PostgreSQL 16 latest minor",
+        "16.14": "PostgreSQL 16.14",
+        "15": "PostgreSQL 15 latest minor",
+        "15.18": "PostgreSQL 15.18",
+        "14": "PostgreSQL 14 latest minor",
+        "14.23": "PostgreSQL 14.23",
+    },
+}
+DEFAULT_DB_VERSIONS = {
+    "mariadb": "11.4",
+    "postgresql": "16",
+}
 
 
 def random_password(length: int = 24) -> str:
@@ -129,8 +172,17 @@ def validate_custom_image(custom_image: str = "") -> str:
     return image
 
 
+def normalize_db_version(db_engine: str, db_version: str = "") -> str:
+    version = (db_version or "").strip()
+    if version in DB_VERSIONS.get(db_engine, {}):
+        return version
+    return DEFAULT_DB_VERSIONS[db_engine]
+
+
 def validate_options(
     php_version: str,
+    db_engine: str,
+    db_version: str,
     php_ini_preset: str,
     resource_preset: str,
     cms_app: str = "none",
@@ -138,12 +190,18 @@ def validate_options(
 ) -> None:
     if php_version not in PHP_IMAGES:
         raise ValueError("Versi PHP tidak tersedia.")
+    if db_engine not in DB_ENGINES:
+        raise ValueError("Pilihan database tidak tersedia.")
+    if normalize_db_version(db_engine, db_version) not in DB_VERSIONS[db_engine]:
+        raise ValueError("Versi database tidak tersedia.")
     if php_ini_preset not in PHP_PRESETS:
         raise ValueError("Preset php.ini tidak tersedia.")
     if resource_preset not in RESOURCE_PRESETS:
         raise ValueError("Preset resource tidak tersedia.")
     if cms_app not in CMS_OPTIONS:
         raise ValueError("Pilihan CMS tidak tersedia.")
+    if db_engine == "postgresql" and cms_app in {"wordpress", "joomla"} and not custom_image:
+        raise ValueError("WordPress/Joomla starter bawaan hanya mendukung MariaDB. Pilih Drupal, Blank PHP site, atau pakai custom image untuk PostgreSQL.")
     if cms_app != "none" and php_version not in CMS_IMAGES[cms_app]:
         raise ValueError("CMS populer saat ini tersedia untuk PHP 8.1 sampai 8.4.")
     validate_custom_image(custom_image)
@@ -151,12 +209,22 @@ def validate_options(
 
 def apply_runtime_options(site: dict) -> dict:
     php_version = site.get("php_version") or "8.3"
+    db_engine = site.get("db_engine") or "mariadb"
+    db_version = normalize_db_version(db_engine, site.get("db_version") or "")
     php_ini_preset = site.get("php_ini_preset") or "standard"
     resource_preset = site.get("resource_preset") or "medium"
     cms_app = site.get("cms_app") or "none"
     custom_image = validate_custom_image(site.get("custom_image") or "")
-    validate_options(php_version, php_ini_preset, resource_preset, cms_app, custom_image)
+    validate_options(php_version, db_engine, db_version, php_ini_preset, resource_preset, cms_app, custom_image)
     site.update(PHP_PRESETS[php_ini_preset])
+    site["db_engine"] = db_engine
+    site["db_version"] = db_version
+    site["db"] = dict(DB_ENGINES[db_engine])
+    site["db"]["version"] = db_version
+    site["db"]["compose_image"] = site["db"]["image_template"].format(version=db_version)
+    site["db_label"] = site["db"]["label"]
+    site["db_host"] = site["db"]["host"]
+    site["db_port"] = site["db"]["port"]
     site["php_image"] = custom_image or CMS_IMAGES.get(cms_app, {}).get(php_version, PHP_IMAGES[php_version])
     if cms_app == "drupal" and not custom_image:
         site["nginx_document_root"] = "/var/www/html/web"
@@ -409,7 +477,7 @@ def goaccess_status(site: dict) -> dict:
     report = goaccess_report_path(site)
     if not report.is_file():
         return {"ready": False, "updated_at": None}
-    updated = datetime.fromtimestamp(report.stat().st_mtime).strftime("%Y-%m-%d %H:%M:%S")
+    updated = local_fromtimestamp(report.stat().st_mtime).strftime("%Y-%m-%d %H:%M:%S")
     return {"ready": True, "updated_at": updated}
 
 
@@ -454,6 +522,7 @@ def create_site(
     domain: str,
     php_version: str,
     db_engine: str,
+    db_version: str = "",
     waf_enabled: bool = False,
     waf_rate_limit_rps: int = 0,
     waf_sqli: bool = False,
@@ -466,7 +535,8 @@ def create_site(
 ) -> dict:
     validate_site(username, domain)
     custom_image = validate_custom_image(custom_image)
-    validate_options(php_version, php_ini_preset, resource_preset, cms_app, custom_image)
+    db_version = normalize_db_version(db_engine, db_version)
+    validate_options(php_version, db_engine, db_version, php_ini_preset, resource_preset, cms_app, custom_image)
     if query_one("SELECT id FROM sites WHERE username = ? OR domain = ?", (username, domain)):
         raise ValueError("Username atau domain sudah ada.")
 
@@ -482,6 +552,7 @@ def create_site(
         "domain": domain,
         "php_version": php_version,
         "db_engine": db_engine,
+        "db_version": db_version,
         "db_name": db_name,
         "db_user": db_user,
         "db_password": db_password,
@@ -502,17 +573,18 @@ def create_site(
     execute(
         """
         INSERT INTO sites (
-            username, domain, php_version, db_engine, db_name, db_user, db_password,
+            username, domain, php_version, db_engine, db_version, db_name, db_user, db_password,
             sftp_password, sftp_port, waf_enabled, waf_rate_limit_rps, waf_sqli, waf_path_traversal, waf_owasp_crs,
             php_ini_preset, resource_preset, cms_app, custom_image
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             username,
             domain,
             php_version,
             db_engine,
+            db_version,
             db_name,
             db_user,
             db_password,
@@ -539,6 +611,7 @@ def update_site_options(
     domain: str,
     php_version: str,
     db_engine: str,
+    db_version: str = "",
     waf_enabled: bool = False,
     waf_rate_limit_rps: int = 0,
     waf_sqli: bool = False,
@@ -552,7 +625,8 @@ def update_site_options(
     domain = domain.strip().lower()
     validate_site(site["username"], domain)
     custom_image = validate_custom_image(custom_image)
-    validate_options(php_version, php_ini_preset, resource_preset, cms_app, custom_image)
+    db_version = normalize_db_version(db_engine, db_version)
+    validate_options(php_version, db_engine, db_version, php_ini_preset, resource_preset, cms_app, custom_image)
     duplicate = query_one("SELECT id FROM sites WHERE domain = ? AND id != ?", (domain, site["id"]))
     if duplicate:
         raise ValueError("Domain sudah dipakai site lain.")
@@ -563,6 +637,7 @@ def update_site_options(
             "domain": domain,
             "php_version": php_version,
             "db_engine": db_engine,
+            "db_version": db_version,
             "waf_enabled": waf_enabled,
             "waf_rate_limit_rps": int(waf_rate_limit_rps or 0),
             "waf_sqli": bool(waf_sqli),
@@ -580,7 +655,7 @@ def update_site_options(
     execute(
         """
         UPDATE sites
-        SET domain = ?, php_version = ?, db_engine = ?, waf_enabled = ?,
+        SET domain = ?, php_version = ?, db_engine = ?, db_version = ?, waf_enabled = ?,
             waf_rate_limit_rps = ?, waf_sqli = ?, waf_path_traversal = ?, waf_owasp_crs = ?,
             php_ini_preset = ?, resource_preset = ?, cms_app = ?, custom_image = ?
         WHERE id = ?
@@ -589,6 +664,7 @@ def update_site_options(
             domain,
             php_version,
             db_engine,
+            db_version,
             int(waf_enabled),
             int(waf_rate_limit_rps or 0),
             int(bool(waf_sqli)),
@@ -674,18 +750,23 @@ def backup_database(site: dict) -> str:
     backup_dir.mkdir(parents=True, exist_ok=True)
     backup_file = backup_dir / f"{site['db_name']}.sql"
     service = f"site-{site['username']}-db"
-    cmd = [
-        "docker",
-        "exec",
-        service,
-        "sh",
-        "-c",
-        f"mariadb-dump -u{site['db_user']} -p{site['db_password']} {site['db_name']}",
-    ]
-    with backup_file.open("w", encoding="utf-8") as fh:
-        result = subprocess.run(cmd, stdout=fh, stderr=subprocess.PIPE, text=True, check=False)
-    if result.returncode != 0:
-        return result.stderr
+    db_engine = site.get("db_engine") or "mariadb"
+    container = docker_manager.client().containers.get(service)
+    if db_engine == "postgresql":
+        cmd = (
+            f"PGPASSWORD={shlex.quote(site['db_password'])} "
+            f"pg_dump -U {shlex.quote(site['db_user'])} -d {shlex.quote(site['db_name'])}"
+        )
+    else:
+        cmd = (
+            f"mariadb-dump -u{shlex.quote(site['db_user'])} "
+            f"-p{shlex.quote(site['db_password'])} {shlex.quote(site['db_name'])}"
+        )
+    result = container.exec_run(["sh", "-c", cmd])
+    if result.exit_code != 0:
+        return result.output.decode("utf-8", errors="replace") or "Backup database gagal."
+    with backup_file.open("wb") as fh:
+        fh.write(result.output)
     return f"Backup database dibuat: {backup_file}"
 
 
@@ -709,12 +790,20 @@ def restore_database(site: dict, upload_file, filename: str) -> str:
     archive.seek(0)
     container.put_archive("/tmp", archive.getvalue())
 
-    cmd = (
-        f"mariadb -u{shlex.quote(site['db_user'])} "
-        f"-p{shlex.quote(site['db_password'])} "
-        f"{shlex.quote(site['db_name'])} < /tmp/restore.sql; "
-        "status=$?; rm -f /tmp/restore.sql; exit $status"
-    )
+    if (site.get("db_engine") or "mariadb") == "postgresql":
+        cmd = (
+            f"PGPASSWORD={shlex.quote(site['db_password'])} "
+            f"psql -v ON_ERROR_STOP=1 -U {shlex.quote(site['db_user'])} "
+            f"-d {shlex.quote(site['db_name'])} -f /tmp/restore.sql; "
+            "status=$?; rm -f /tmp/restore.sql; exit $status"
+        )
+    else:
+        cmd = (
+            f"mariadb -u{shlex.quote(site['db_user'])} "
+            f"-p{shlex.quote(site['db_password'])} "
+            f"{shlex.quote(site['db_name'])} < /tmp/restore.sql; "
+            "status=$?; rm -f /tmp/restore.sql; exit $status"
+        )
     result = container.exec_run(["sh", "-c", cmd])
     if result.exit_code != 0:
         return result.output.decode("utf-8", errors="replace") or "Restore database gagal."

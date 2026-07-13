@@ -17,7 +17,7 @@ Docker Hosting is a lightweight hosting control panel built with FastAPI, Docker
 - Per-site Docker Compose stack:
   - Nginx
   - PHP-FPM or CMS image
-  - MariaDB
+  - MariaDB or PostgreSQL
   - isolated SFTP container
 - Traefik reverse proxy with HTTPS labels.
 - HTTP to HTTPS redirect for the panel and all hosted sites.
@@ -26,14 +26,17 @@ Docker Hosting is a lightweight hosting control panel built with FastAPI, Docker
 - Optional Coraza WAF middleware per site.
 - PHP version selector.
 - CMS starter selector for WordPress, Joomla, and Drupal.
+- Database selector with MariaDB 11.4 and PostgreSQL 14-18 major/current-minor options.
 - Custom PHP/CMS image override per site.
 - Edit site runtime options after creation, including CMS/image choice.
 - Delete site action from the panel, including compose stack, database volume, and site files.
 - `php.ini` upload presets.
 - CPU/RAM resource presets.
-- Detail page with SFTP and MySQL credentials.
-- `.sql` upload and restore into the site's MariaDB container.
+- Detail page with SFTP and database credentials.
+- `.sql` upload and restore into the site's MariaDB or PostgreSQL container.
 - Database backup action from the panel.
+
+WordPress and Joomla official starter images expect MySQL/MariaDB. PostgreSQL is available for Drupal, blank PHP sites, or custom images that support PostgreSQL.
 
 ## Permission Rules
 

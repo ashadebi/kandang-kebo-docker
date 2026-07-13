@@ -1,6 +1,6 @@
 # Kandang Kebo Docker
 
-Docker Hosting Panel for small VPS hosting operations. It provisions one Docker Compose stack per site with Traefik routing, HTTPS, Nginx, PHP-FPM or CMS images, MariaDB, isolated SFTP, backup/restore tools, per-site WAF controls, and multi-user access.
+Docker Hosting Panel for small VPS hosting operations. It provisions one Docker Compose stack per site with Traefik routing, HTTPS, Nginx, PHP-FPM or CMS images, MariaDB or PostgreSQL, isolated SFTP, backup/restore tools, per-site WAF controls, and multi-user access.
 
 Built for `ashadebi/kandang-kebo-docker`.
 
@@ -17,7 +17,7 @@ Built for `ashadebi/kandang-kebo-docker`.
 - Per-site containers:
   - Nginx
   - PHP-FPM or CMS image
-  - MariaDB
+  - MariaDB or PostgreSQL
   - isolated SFTP service with its own host port
 - Traefik reverse proxy on ports `80` and `443`.
 - Automatic HTTP to HTTPS redirect for the panel and hosted sites.
@@ -32,11 +32,12 @@ Built for `ashadebi/kandang-kebo-docker`.
   - OWASP CRS / scanner User-Agent blocks
 - PHP version selector from PHP 5.6 through PHP 8.4.
 - CMS starter selector for WordPress, Joomla, and Drupal.
+- Database selector with MariaDB 11.4 and PostgreSQL 14-18 major/current-minor options.
 - Optional custom PHP/CMS image per site.
 - `php.ini` presets for standard, large, and very large uploads.
 - CPU/RAM resource presets per site.
-- Site detail page with generated SFTP and MySQL credentials.
-- `.sql` upload and restore into the site's MariaDB container.
+- Site detail page with generated SFTP and database credentials.
+- `.sql` upload and restore into the site's MariaDB or PostgreSQL container.
 - Database backup action from the panel.
 - GoAccess/AWStats-style traffic report generation.
 - Security dashboard for WAF-enabled sites.
@@ -63,7 +64,7 @@ Traefik :80/:443
         +-- site-client1-sftp :22000
 ```
 
-Each site has its own internal Docker network. Only Nginx joins the public Traefik network. PHP-FPM, MariaDB, and SFTP stay isolated inside the site stack.
+Each site has its own internal Docker network. Only Nginx joins the public Traefik network. PHP-FPM, database, and SFTP stay isolated inside the site stack.
 
 ## Requirements
 
@@ -244,8 +245,10 @@ The site detail page shows the exact SFTP host, port, username, and password.
 
 Open a site detail page and use:
 
-- **Backup Database** to create a MariaDB dump under the site's backup directory.
-- **Restore Database** to upload a `.sql` file and import it into the site's MariaDB container.
+- **Backup Database** to create a MariaDB or PostgreSQL dump under the site's backup directory.
+- **Restore Database** to upload a `.sql` file and import it into the site's database container.
+
+WordPress and Joomla official starter images expect MySQL/MariaDB. PostgreSQL is available for Drupal, blank PHP sites, or custom images that support PostgreSQL.
 
 The detail page also shows:
 

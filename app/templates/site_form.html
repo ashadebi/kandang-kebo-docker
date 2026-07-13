@@ -33,8 +33,31 @@
       </select>
     </label>
     <label>Database
-      <select name="db_engine">
+      <select name="db_engine" id="db-engine">
         <option value="mariadb" {% if not site or site.db_engine == "mariadb" %}selected{% endif %}>MariaDB</option>
+        <option value="postgresql" {% if site and site.db_engine == "postgresql" %}selected{% endif %}>PostgreSQL</option>
+      </select>
+      <span class="muted">WordPress/Joomla starter bawaan memakai MariaDB. Drupal, Blank PHP site, atau custom image bisa dipakai dengan PostgreSQL.</span>
+    </label>
+    <label>Database Version
+      <select name="db_version" id="db-version">
+        <optgroup label="MariaDB">
+          <option value="11.4" data-engine="mariadb" {% if not site or site.db_version == "11.4" or (site.db_engine == "mariadb" and not site.db_version) %}selected{% endif %}>MariaDB 11.4 LTS</option>
+        </optgroup>
+        <optgroup label="PostgreSQL mayor">
+          <option value="18" data-engine="postgresql" {% if site and site.db_version == "18" %}selected{% endif %}>PostgreSQL 18 latest minor</option>
+          <option value="17" data-engine="postgresql" {% if site and site.db_version == "17" %}selected{% endif %}>PostgreSQL 17 latest minor</option>
+          <option value="16" data-engine="postgresql" {% if site and (site.db_version == "16" or (site.db_engine == "postgresql" and not site.db_version)) %}selected{% endif %}>PostgreSQL 16 latest minor</option>
+          <option value="15" data-engine="postgresql" {% if site and site.db_version == "15" %}selected{% endif %}>PostgreSQL 15 latest minor</option>
+          <option value="14" data-engine="postgresql" {% if site and site.db_version == "14" %}selected{% endif %}>PostgreSQL 14 latest minor</option>
+        </optgroup>
+        <optgroup label="PostgreSQL current minor">
+          <option value="18.4" data-engine="postgresql" {% if site and site.db_version == "18.4" %}selected{% endif %}>PostgreSQL 18.4</option>
+          <option value="17.10" data-engine="postgresql" {% if site and site.db_version == "17.10" %}selected{% endif %}>PostgreSQL 17.10</option>
+          <option value="16.14" data-engine="postgresql" {% if site and site.db_version == "16.14" %}selected{% endif %}>PostgreSQL 16.14</option>
+          <option value="15.18" data-engine="postgresql" {% if site and site.db_version == "15.18" %}selected{% endif %}>PostgreSQL 15.18</option>
+          <option value="14.23" data-engine="postgresql" {% if site and site.db_version == "14.23" %}selected{% endif %}>PostgreSQL 14.23</option>
+        </optgroup>
       </select>
     </label>
     <label>CMS / Starter App
@@ -95,4 +118,23 @@
     </div>
   </form>
 </div>
+<script>
+const dbEngine = document.getElementById('db-engine');
+const dbVersion = document.getElementById('db-version');
+function syncDbVersionOptions() {
+  const engine = dbEngine.value;
+  let firstVisible = null;
+  for (const option of dbVersion.options) {
+    const visible = option.dataset.engine === engine;
+    option.hidden = !visible;
+    option.disabled = !visible;
+    if (visible && !firstVisible) firstVisible = option;
+  }
+  if (dbVersion.selectedOptions[0]?.dataset.engine !== engine && firstVisible) {
+    dbVersion.value = engine === 'postgresql' ? '16' : firstVisible.value;
+  }
+}
+dbEngine.addEventListener('change', syncDbVersionOptions);
+syncDbVersionOptions();
+</script>
 {% endblock %}

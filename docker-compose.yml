@@ -8,6 +8,7 @@ services:
     userns_mode: "host"
     environment:
       DOCKER_API_VERSION: "1.40"
+      TZ: ${TZ:-Asia/Jakarta}
     security_opt:
       - no-new-privileges:true
     cap_drop:
@@ -45,6 +46,8 @@ services:
     security_opt:
       - no-new-privileges:true
     env_file: .env
+    environment:
+      TZ: ${TZ:-Asia/Jakarta}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./data:/app/data
@@ -74,6 +77,8 @@ services:
     pids_limit: 256
     security_opt:
       - no-new-privileges:true
+    environment:
+      TZ: ${TZ:-Asia/Jakarta}
     ports:
       - "${SFTP_PORT:-2222}:22"
     volumes:
@@ -91,6 +96,8 @@ services:
     read_only: true
     security_opt:
       - no-new-privileges:true
+    environment:
+      TZ: ${TZ:-Asia/Jakarta}
     cap_drop:
       - NET_RAW
     tmpfs:

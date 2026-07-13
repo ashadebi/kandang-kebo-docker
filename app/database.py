@@ -43,6 +43,7 @@ def init_db() -> None:
                 domain TEXT NOT NULL UNIQUE,
                 php_version TEXT NOT NULL DEFAULT '8.3',
                 db_engine TEXT NOT NULL DEFAULT 'mariadb',
+                db_version TEXT NOT NULL DEFAULT '',
                 db_name TEXT NOT NULL,
                 db_user TEXT NOT NULL,
                 db_password TEXT NOT NULL,
@@ -67,6 +68,8 @@ def init_db() -> None:
         columns = {row["name"] for row in conn.execute("PRAGMA table_info(sites)").fetchall()}
         if "waf_enabled" not in columns:
             conn.execute("ALTER TABLE sites ADD COLUMN waf_enabled INTEGER NOT NULL DEFAULT 0")
+        if "db_version" not in columns:
+            conn.execute("ALTER TABLE sites ADD COLUMN db_version TEXT NOT NULL DEFAULT ''")
         if "waf_rate_limit_rps" not in columns:
             conn.execute("ALTER TABLE sites ADD COLUMN waf_rate_limit_rps INTEGER NOT NULL DEFAULT 0")
         if "waf_sqli" not in columns:

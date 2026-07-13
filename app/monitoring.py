@@ -3,6 +3,7 @@ from collections import Counter
 from datetime import datetime, timedelta, timezone
 
 from . import docker_manager
+from .config import local_now, settings
 from .database import query_all
 
 
@@ -14,11 +15,11 @@ RULE_RE = re.compile(r"id[:=]'?(?P<rule>\d+)")
 def parse_log_time(line: str) -> datetime:
     match = LOG_TS_RE.search(line)
     if not match:
-        return datetime.now(timezone.utc)
+        return local_now()
     try:
-        return datetime.fromisoformat(match.group("ts")).replace(tzinfo=timezone.utc)
+        return datetime.fromisoformat(match.group("ts")).replace(tzinfo=timezone.utc).astimezone(settings.local_tz)
     except ValueError:
-        return datetime.now(timezone.utc)
+        return local_now()
 
 
 def coraza_summary(hours: int = 24) -> dict:
@@ -34,7 +35,7 @@ def coraza_summary(hours: int = 24) -> dict:
         raw_logs = ""
         events.append(
             {
-                "time": datetime.now(timezone.utc),
+                "time": local_now(),
                 "host": "-",
                 "rule": "-",
                 "message": f"Log Traefik belum bisa dibaca: {exc}",

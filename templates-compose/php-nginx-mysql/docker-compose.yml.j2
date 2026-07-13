@@ -12,6 +12,8 @@ services:
     read_only: true
     security_opt:
       - no-new-privileges:true
+    environment:
+      TZ: Asia/Jakarta
     cap_drop:
       - NET_RAW
     tmpfs:
@@ -61,16 +63,22 @@ services:
       - NET_RAW
 {% if cms_app == "wordpress" %}
     environment:
-      WORDPRESS_DB_HOST: db:3306
+      TZ: Asia/Jakarta
+      WORDPRESS_DB_HOST: {{ db.wordpress_host }}
       WORDPRESS_DB_NAME: {{ db_name }}
       WORDPRESS_DB_USER: {{ db_user }}
       WORDPRESS_DB_PASSWORD: {{ db_password }}
 {% elif cms_app == "joomla" %}
     environment:
-      JOOMLA_DB_HOST: db:3306
+      TZ: Asia/Jakarta
+      JOOMLA_DB_HOST: {{ db.joomla_host }}
       JOOMLA_DB_NAME: {{ db_name }}
       JOOMLA_DB_USER: {{ db_user }}
       JOOMLA_DB_PASSWORD: {{ db_password }}
+{% endif %}
+{% if cms_app not in ["wordpress", "joomla"] %}
+    environment:
+      TZ: Asia/Jakarta
 {% endif %}
 {% if cms_app == "drupal" and not custom_image %}
     command:
@@ -91,7 +99,7 @@ services:
       - internal
 
   db:
-    image: mariadb:11.4
+    image: {{ db.compose_image }}
     container_name: site-{{ username }}-db
     restart: unless-stopped
     cpus: "{{ resources.db.cpus }}"
@@ -101,12 +109,25 @@ services:
     security_opt:
       - no-new-privileges:true
     environment:
+{% if db_engine == "postgresql" %}
+      TZ: Asia/Jakarta
+      PGTZ: Asia/Jakarta
+      POSTGRES_DB: {{ db_name }}
+      POSTGRES_USER: {{ db_user }}
+      POSTGRES_PASSWORD: {{ db_password }}
+{% else %}
+      TZ: Asia/Jakarta
       MARIADB_DATABASE: {{ db_name }}
       MARIADB_USER: {{ db_user }}
       MARIADB_PASSWORD: {{ db_password }}
       MARIADB_ROOT_PASSWORD: {{ db_password }}
+{% endif %}
     volumes:
+{% if db_engine == "postgresql" %}
+      - db_data:/var/lib/postgresql/data
+{% else %}
       - db_data:/var/lib/mysql
+{% endif %}
     networks:
       - internal
 
@@ -117,6 +138,8 @@ services:
     pids_limit: 128
     security_opt:
       - no-new-privileges:true
+    environment:
+      TZ: Asia/Jakarta
     ports:
       - "{{ sftp_port }}:22"
     command: "{{ username }}:{{ sftp_password }}:82:82:public_html"

@@ -1,5 +1,7 @@
 import os
 from pathlib import Path
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
 
 class Settings:
@@ -15,6 +17,16 @@ class Settings:
     sftp_port = int(os.getenv("SFTP_PORT", "2222"))
     data_dir = Path("/app/data")
     templates_dir = Path("/app/templates-compose")
+    timezone = os.getenv("TZ", "Asia/Jakarta")
+    local_tz = ZoneInfo(timezone)
+
+
+def local_now() -> datetime:
+    return datetime.now(settings.local_tz)
+
+
+def local_fromtimestamp(timestamp: float) -> datetime:
+    return datetime.fromtimestamp(timestamp, tz=settings.local_tz)
 
 
 settings = Settings()
